@@ -41,6 +41,7 @@ export SOURCE_DATE_EPOCH=${SOURCE_DATE_EPOCH:-$WINE_SOURCE_DATE_EPOCH}
 encore_prefix_maps="-ffile-prefix-map=$PROJECT_ROOT=. -fdebug-prefix-map=$PROJECT_ROOT=. -fmacro-prefix-map=$PROJECT_ROOT=."
 export CFLAGS="${CFLAGS:--O2 -pipe} $encore_prefix_maps"
 export CXXFLAGS="${CXXFLAGS:--O2 -pipe} $encore_prefix_maps"
+export CROSSCFLAGS="${CROSSCFLAGS:--g -O2} $encore_prefix_maps"
 encore_cppflags="-I$PROJECT_ROOT/packaging/uapi${CPPFLAGS:+ $CPPFLAGS}"
 
 say "Configuring Wine $WINE_REVISION in $WINE_BUILD"
@@ -115,6 +116,14 @@ else
             --with-pulse
     )
 fi
+
+for pe_arch in i386 x86_64; do
+    pe_cflags=$(sed -n "s/^${pe_arch}_CFLAGS = *//p" "$WINE_BUILD/Makefile")
+    case " $pe_cflags " in
+        *" -ffile-prefix-map=$PROJECT_ROOT=. "*) ;;
+        *) die "Wine configuration omitted reproducible path flags for $pe_arch PE objects" ;;
+    esac
+done
 
 grep -Fqx 'HOST_ARCH = x86_64' "$WINE_BUILD/Makefile" ||
     die 'Wine configuration did not select the x86_64 Unix host architecture'
