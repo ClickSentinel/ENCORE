@@ -21,6 +21,16 @@ ENCORE is a guided Wine compatibility setup for running Ableton Live 12 Suite on
   <img src="assets/screenshots/ableton-live-12-audio-settings.png" alt="Ableton Live 12 audio settings using PulseAudio through ENCORE" width="380">
 </p>
 
+## Features
+
+- Drag files and audio directly from Nautilus and compatible desktop file managers into Live.
+- Corrected internal drag-and-drop positioning under Wine and Xwayland.
+- Windows VST3 plug-in scanning and hosting, including resizable custom plug-in windows with working mouse input.
+- VST3 custom folders anywhere the user selects, including mounted drives, through the native desktop folder picker.
+- Audio through Wine's PulseAudio backend on both PulseAudio systems and PipeWire systems using `pipewire-pulse`.
+- Guided HiDPI scaling, themed application menus, WebView2 Learn View support, and dynamic CPU topology selection.
+- Application-menu integration for GNOME, KDE, and other desktops that support freedesktop desktop entries.
+
 ## Quick start
 
 Download or clone ENCORE, open a terminal in its folder, and run:
