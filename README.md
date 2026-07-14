@@ -21,6 +21,55 @@ ENCORE is a guided Wine compatibility setup for running Ableton Live 12 Suite on
   <img src="assets/screenshots/ableton-live-12-audio-settings.png" alt="Ableton Live 12 audio settings using PulseAudio through ENCORE" width="380">
 </p>
 
+## Download and get started
+
+<p align="center">
+  <a href="https://github.com/wowitsjack/ENCORE/releases/download/v0.1.0/ENCORE-v0.1.0-linux-x86_64.tar.xz">
+    <img src="https://img.shields.io/badge/Download-ENCORE%20v0.1.0-6f42c1?style=for-the-badge&amp;logo=github" alt="Download ENCORE v0.1.0 for Linux">
+  </a>
+</p>
+
+<p align="center">
+  <strong>Recommended for x86-64 Linux</strong><br>
+  The download already contains ENCORE and its verified Wine runtime. You do not need to compile Wine.
+</p>
+
+<p align="center">
+  <a href="https://github.com/wowitsjack/ENCORE/releases/tag/v0.1.0">Release notes and checksums</a>
+</p>
+
+### Before you start
+
+You need:
+
+- an x86-64 PC running Ubuntu 22.04 or newer, Debian 12 or newer, Fedora, Arch Linux, or CachyOS;
+- about 3.5 GiB of free space, plus the size of your Ableton installation;
+- an internet connection for dependencies and the first WebView2 setup;
+- the complete **already-installed** `Live 12 Suite` folder from your own licensed Windows installation.
+
+> [!IMPORTANT]
+> The downloaded Ableton installer is not enough. Install Live on Windows first, or extract your licensed installed copy another way, then copy the complete outer `Live 12 Suite` folder to Linux. See [the required folder layout](#supplying-ableton-live).
+
+### Install in four steps
+
+1. Click the **Download ENCORE v0.1.0** button above.
+2. Open your Downloads folder and extract the `.tar.xz` archive.
+3. Open the extracted `ENCORE-v0.1.0-linux-x86_64` folder, right-click an empty area, and choose **Open in Terminal**.
+4. Paste this command and press Enter:
+
+```sh
+./install.sh
+```
+
+If your file manager does not offer **Open in Terminal**, open the Terminal app, type `cd ` with a space after it, drag the extracted ENCORE folder into the terminal, press Enter, then run `./install.sh`.
+
+The friendly setup wizard checks your system, shows any package command before asking for sudo, asks you to select the installed Ableton folder, recommends a display scale, creates an application-menu entry, and can launch Live when setup is finished.
+
+> [!CAUTION]
+> Do not run `sudo ./install.sh`. Run it as your normal user. ENCORE asks for sudo only when you approve installation of missing system packages.
+
+If setup is interrupted, run `./install.sh` again. ENCORE safely reuses completed steps and tells you where to find its logs if something fails.
+
 ## Features
 
 - Drag files and audio directly from Nautilus and compatible desktop file managers into Live.
@@ -30,33 +79,6 @@ ENCORE is a guided Wine compatibility setup for running Ableton Live 12 Suite on
 - Audio through Wine's PulseAudio backend on both PulseAudio systems and PipeWire systems using `pipewire-pulse`.
 - Guided HiDPI scaling, themed application menus, WebView2 Learn View support, and dynamic CPU topology selection.
 - Application-menu integration for GNOME, KDE, and other desktops that support freedesktop desktop entries.
-
-## Quick start
-
-Download the turnkey archive from the [latest release](https://github.com/wowitsjack/ENCORE/releases/latest), extract it, open a terminal in its folder, and run:
-
-```sh
-./install.sh
-```
-
-The release already contains the compact ENCORE Wine runtime. Cloning the repository also works: the setup script downloads and verifies that same pinned runtime before setup.
-
-The setup script is an interactive wizard. It:
-
-- detects Ubuntu/Debian, Fedora, Arch Linux, and CachyOS package systems;
-- checks the desktop, session, CPU, memory, disk space, and existing ENCORE setup;
-- finds complete Windows-installed Ableton Live 12 folders or lets you drag one into the terminal;
-- explains and recommends display scaling instead of silently forcing a DPI;
-- uses the bundled runtime or downloads it with a pinned SHA-256 checksum;
-- keeps local Wine compilation as an explicit advanced option;
-- shows the exact system package command before asking for sudo;
-- resumes safe completed work when rerun after a cancellation or failure;
-- installs the application-menu entry and optionally launches Live;
-- optionally offers authenticated GitHub CLI users a final chance to star ENCORE; pressing Enter accepts, and unauthenticated users are never prompted.
-
-Do **not** run the whole script with `sudo`. ENCORE asks for sudo only if you approve installation of missing system packages.
-
-The release includes only ENCORE and its patched Wine runtime. Ableton Live, the Wine prefix, plug-ins, user files, and authorization data are never included. Supply the complete Ableton application folder from your own licensed Windows installation, or the same complete folder extracted another way from your licensed copy.
 
 ## Supplying Ableton Live
 
