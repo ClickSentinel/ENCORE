@@ -46,9 +46,13 @@ validate_runtime()
     [ -f "$root/lib/wine/x86_64-windows/wow64cpu.dll" ] || return 1
     [ -f "$root/lib/wine/x86_64-windows/wow64win.dll" ] || return 1
     [ -f "$root/lib/wine/x86_64-windows/dxgi.dll" ] || return 1
+    [ -f "$root/lib/wine/x86_64-windows/msvcp120.dll" ] || return 1
+    [ -f "$root/lib/wine/x86_64-windows/msvcr120.dll" ] || return 1
     [ -f "$root/lib/wine/i386-windows/ntdll.dll" ] || return 1
     [ -f "$root/lib/wine/i386-windows/kernel32.dll" ] || return 1
     [ -f "$root/lib/wine/i386-windows/dxgi.dll" ] || return 1
+    [ -f "$root/lib/wine/i386-windows/msvcp120.dll" ] || return 1
+    [ -f "$root/lib/wine/i386-windows/msvcr120.dll" ] || return 1
     [ -f "$root/lib/wine/i386-windows/cmd.exe" ] || return 1
     [ -f "$root/lib/wine/x86_64-windows/wineboot.exe" ] || return 1
     [ ! -e "$root/lib/wine/i386-unix" ] || return 1
@@ -57,7 +61,7 @@ validate_runtime()
     mapfile -t records <"$manifest"
     [ "${#records[@]}" -eq 8 ] || return 1
     [ "${records[0]}" = ENCORE_WINE_RUNTIME_V1 ] || return 1
-    [ "${records[1]}" = "encore_version=$ENCORE_RELEASE_VERSION" ] || return 1
+    [ "${records[1]}" = "encore_version=$ENCORE_RUNTIME_VERSION" ] || return 1
     [ "${records[2]}" = wine_version=11.13 ] || return 1
     [ "${records[3]}" = "wine_revision=$WINE_REVISION" ] || return 1
     [ "${records[4]}" = "patch_sha256=$expected_patch" ] || return 1

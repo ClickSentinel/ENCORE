@@ -1,14 +1,14 @@
 [Desktop Entry]
 Type=Application
 Version=1.0
-Name=Ableton Live 12 Suite (ENCORE)
+Name=@NAME@
 GenericName=Digital Audio Workstation
-Comment=Run Ableton Live 12 Suite with ENCORE
+Comment=@COMMENT@
 Exec=@EXEC@
 TryExec=@TRY_EXEC@
 Icon=@ICON@
 Terminal=false
 StartupNotify=true
-StartupWMClass=ableton live 12 suite.exe
+StartupWMClass=@STARTUP_WM_CLASS@
 Categories=AudioVideo;Audio;Music;
 Keywords=ENCORE;Ableton;Live;DAW;Audio;Music;

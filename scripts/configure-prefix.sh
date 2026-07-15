@@ -4,8 +4,12 @@
 set -eu
 
 . "$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)/common.sh"
+. "$SCRIPT_DIR/ableton-profile.sh"
 
-ableton_binary=${ENCORE_ABLETON:-"$ENCORE_PREFIX/drive_c/ProgramData/Ableton/Live 12 Suite/Program/Ableton Live 12 Suite.exe"}
+ableton_binary=$(encore_resolve_ableton_executable \
+    "$ENCORE_PREFIX" "${ENCORE_ABLETON-}") || exit 1
+encore_ableton_profile_from_executable "$ableton_binary" || \
+    die "unsupported Ableton executable: $ableton_binary"
 dosdevices="$ENCORE_PREFIX/dosdevices"
 root_drive=
 
@@ -40,7 +44,7 @@ fi
 
 WINEPREFIX="$ENCORE_PREFIX" WINEDEBUG=-all \
     "$WINE_BINARY" reg.exe add \
-    'HKCU\Software\Wine\AppDefaults\Ableton Live 12 Suite.exe\X11 Driver' \
+    "HKCU\\Software\\Wine\\AppDefaults\\$ENCORE_ABLETON_EXE\\X11 Driver" \
     /v FileDialogPortal /t REG_SZ /d always /f >/dev/null
 
 say "Native folder picker enabled for Ableton; host files are available through $root_drive"

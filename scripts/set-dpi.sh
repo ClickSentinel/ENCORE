@@ -1,6 +1,7 @@
 #!/bin/sh
 
 . "$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)/common.sh"
+. "$SCRIPT_DIR/ableton-profile.sh"
 
 dpi=${1:-192}
 case "$dpi" in
@@ -10,7 +11,8 @@ esac
 
 [ -x "$WINE_BINARY" ] || die "Wine is not built: $WINE_BINARY"
 [ -f "$ENCORE_PREFIX/user.reg" ] || die "Ableton prefix does not exist: $ENCORE_PREFIX"
-ableton_binary=${ENCORE_ABLETON:-"$ENCORE_PREFIX/drive_c/ProgramData/Ableton/Live 12 Suite/Program/Ableton Live 12 Suite.exe"}
+ableton_binary=$(encore_resolve_ableton_executable \
+    "$ENCORE_PREFIX" "${ENCORE_ABLETON-}") || exit 1
 
 if "$SCRIPT_DIR/process-is-running.sh" "$ableton_binary"; then
     die "Ableton Live is running; close it before changing prefix DPI"

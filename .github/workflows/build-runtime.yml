@@ -4,9 +4,9 @@ on:
   workflow_dispatch:
     inputs:
       release_version:
-        description: Version recorded in the ENCORE runtime manifest
+        description: ENCORE application release version to package
         required: true
-        default: v0.1.0
+        default: v0.1.1
         type: string
       artifact_run_id:
         description: Existing workflow run ID to validate without rebuilding Wine

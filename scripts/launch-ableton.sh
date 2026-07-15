@@ -4,8 +4,9 @@ set -u
 SCRIPT_DIR=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
 ROOT=$(CDPATH= cd -- "$SCRIPT_DIR/.." && pwd)
 . "$ROOT/scripts/load-runtime-config.sh"
+. "$ROOT/scripts/ableton-profile.sh"
 PREFIX=${ENCORE_PREFIX:-"$ROOT/ableton-prefix"}
-ABLETON=${ENCORE_ABLETON:-"$PREFIX/drive_c/ProgramData/Ableton/Live 12 Suite/Program/Ableton Live 12 Suite.exe"}
+ABLETON=$(encore_resolve_ableton_executable "$PREFIX" "${ENCORE_ABLETON-}") || exit 1
 LOG="$ROOT/logs/ableton-dock.log"
 PROCESS_CHECK="$ROOT/scripts/process-is-running.sh"
 

@@ -1,6 +1,7 @@
 #!/bin/sh
 
 . "$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)/common.sh"
+. "$SCRIPT_DIR/ableton-profile.sh"
 
 require_command sed
 
@@ -48,21 +49,35 @@ escape_sed()
 
 launcher="$PROJECT_ROOT/scripts/launch-ableton.sh"
 desktop_prefix=$(make_absolute_path "$ENCORE_PREFIX")
-ableton_binary=$(make_absolute_path "${ENCORE_ABLETON:-$desktop_prefix/drive_c/ProgramData/Ableton/Live 12 Suite/Program/Ableton Live 12 Suite.exe}")
+configured_ableton=${ENCORE_ABLETON-}
+if [ -n "$configured_ableton" ]; then
+    configured_ableton=$(make_absolute_path "$configured_ableton")
+fi
+ableton_binary=$(encore_resolve_ableton_executable \
+    "$desktop_prefix" "$configured_ableton") || exit 1
+encore_ableton_profile_from_executable "$ableton_binary" || \
+    die "unsupported Ableton executable: $ableton_binary"
 live_root=$(dirname -- "$(dirname -- "$ableton_binary")")
-icon="$live_root/Resources/Icons/live_suite.ico"
+icon=$(encore_ableton_icon_for_live_root "$live_root" 2>/dev/null || true)
+[ -n "$icon" ] || icon="$PROJECT_ROOT/assets/branding/encore-logo.png"
 
 exec_value="/bin/sh $(quote_exec_argument "$launcher")"
 exec_escaped=$(escape_sed "$exec_value")
 try_exec_escaped=$(escape_sed "$(escape_desktop_string "$launcher")")
 icon_escaped=$(escape_sed "$(escape_desktop_string "$icon")")
+name_escaped=$(escape_sed "$(escape_desktop_string "$ENCORE_ABLETON_PRODUCT (ENCORE)")")
+comment_escaped=$(escape_sed "$(escape_desktop_string "Run $ENCORE_ABLETON_PRODUCT with ENCORE")")
+wm_class_escaped=$(escape_sed "$(escape_desktop_string "$ENCORE_ABLETON_WM_CLASS")")
 
 render_desktop_entry()
 {
     sed \
+        -e "s|@NAME@|$name_escaped|g" \
+        -e "s|@COMMENT@|$comment_escaped|g" \
         -e "s|@EXEC@|$exec_escaped|g" \
         -e "s|@TRY_EXEC@|$try_exec_escaped|g" \
         -e "s|@ICON@|$icon_escaped|g" \
+        -e "s|@STARTUP_WM_CLASS@|$wm_class_escaped|g" \
         "$template"
 }
 

@@ -12,7 +12,7 @@ release_version=${1:-$ENCORE_RELEASE_VERSION}
 output_dir=${2:-$PROJECT_ROOT/dist}
 case $release_version in
     v[0-9]*.[0-9]*.[0-9]*) ;;
-    *) die "release version must look like v0.1.0: $release_version" ;;
+    *) die "release version must look like v1.2.3: $release_version" ;;
 esac
 [ "$release_version" = "$ENCORE_RELEASE_VERSION" ] ||
     die "release version must match $ENCORE_RELEASE_VERSION"
@@ -68,6 +68,12 @@ if [ -f "$PROJECT_ROOT/install.sh" ] &&
        rev-parse --is-inside-work-tree >/dev/null 2>&1; then
     require_command git
     build_turnkey_bundle=1
+    if ! git -c safe.directory="$PROJECT_ROOT" -C "$PROJECT_ROOT" diff --quiet -- ||
+       ! git -c safe.directory="$PROJECT_ROOT" -C "$PROJECT_ROOT" diff --cached --quiet -- ||
+       [ -n "$(git -c safe.directory="$PROJECT_ROOT" -C "$PROJECT_ROOT" \
+           ls-files --others --exclude-standard)" ]; then
+        die 'the turnkey bundle must be built from a clean committed worktree'
+    fi
 fi
 
 say "Staging the installed Wine runtime"
@@ -89,9 +95,13 @@ for required in \
     lib/wine/x86_64-windows/wow64cpu.dll \
     lib/wine/x86_64-windows/wow64win.dll \
     lib/wine/x86_64-windows/dxgi.dll \
+    lib/wine/x86_64-windows/msvcp120.dll \
+    lib/wine/x86_64-windows/msvcr120.dll \
     lib/wine/i386-windows/ntdll.dll \
     lib/wine/i386-windows/kernel32.dll \
     lib/wine/i386-windows/dxgi.dll \
+    lib/wine/i386-windows/msvcp120.dll \
+    lib/wine/i386-windows/msvcr120.dll \
     lib/wine/i386-windows/cmd.exe \
     lib/wine/x86_64-windows/wineboot.exe \
     share/wine/wine.inf
@@ -154,7 +164,7 @@ fi
 
 cat >"$runtime_dir/.encore-runtime" <<EOF
 ENCORE_WINE_RUNTIME_V1
-encore_version=$release_version
+encore_version=$ENCORE_RUNTIME_VERSION
 wine_version=11.13
 wine_revision=$WINE_REVISION
 patch_sha256=$patch_sha256
@@ -164,7 +174,7 @@ glibc_max=$glibc_max
 EOF
 
 cat >"$runtime_dir/BUILD-INFO.txt" <<EOF
-ENCORE Wine runtime $release_version
+ENCORE Wine runtime $ENCORE_RUNTIME_VERSION
 Wine version: 11.13
 Upstream revision: $WINE_REVISION
 ENCORE patch SHA-256: $patch_sha256
@@ -262,6 +272,9 @@ tar -xJf "$runtime_archive" -C "$relocation_dir"
 
 if [ "$build_turnkey_bundle" -eq 1 ]; then
     bundle_test_dir="$work_dir/bundle test"
+    bundle_test_prefix="$bundle_test_dir/prefix"
+    bundle_test_ableton="$bundle_test_prefix/drive_c/ProgramData/Ableton/Live 11 Standard/Program/Ableton Live 11 Standard.exe"
+    bundle_launcher_output=
     mkdir -p "$bundle_test_dir"
     tar -xJf "$bundle_archive" -C "$bundle_test_dir"
     bundle_root="$bundle_test_dir/$bundle_name"
@@ -269,9 +282,19 @@ if [ "$build_turnkey_bundle" -eq 1 ]; then
         die "turnkey bundle runtime smoke test failed"
     ENCORE_RUNTIME_ROOT="$bundle_root/runtime/wine" \
         "$bundle_root/scripts/download-wine-runtime.sh" >/dev/null
-    ENCORE_DRY_RUN=1 "$bundle_root/scripts/run-ableton.sh" |
+    [ -f "$bundle_root/scripts/ableton-profile.sh" ] ||
+        die 'turnkey bundle is missing Ableton product profiles'
+    mkdir -p "$(dirname -- "$bundle_test_ableton")"
+    : >"$bundle_test_ableton"
+    bundle_launcher_output=$(ENCORE_PREFIX="$bundle_test_prefix" \
+        ENCORE_ABLETON="$bundle_test_ableton" ENCORE_DRY_RUN=1 \
+        "$bundle_root/scripts/run-ableton.sh")
+    printf '%s\n' "$bundle_launcher_output" |
         grep -Fqx "WINE=$bundle_root/runtime/wine/bin/wine" ||
         die "turnkey bundle launcher is not using its bundled runtime"
+    printf '%s\n' "$bundle_launcher_output" |
+        grep -Fqx "ABLETON=$bundle_test_ableton" ||
+        die 'turnkey bundle launcher is not using its selected Ableton product'
 fi
 
 source_test_dir="$work_dir/source test"
