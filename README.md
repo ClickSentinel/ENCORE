@@ -24,8 +24,8 @@ ENCORE is a guided Wine compatibility setup for running supported Windows editio
 ## Download and get started
 
 <p align="center">
-  <a href="https://github.com/wowitsjack/ENCORE/releases/download/v0.1.2/ENCORE-v0.1.2-linux-x86_64.tar.xz">
-    <img src="https://img.shields.io/badge/Download-ENCORE%20v0.1.2-6f42c1?style=for-the-badge&amp;logo=github" alt="Download ENCORE v0.1.2 for Linux">
+  <a href="https://github.com/wowitsjack/ENCORE/releases/download/v0.1.3/ENCORE-v0.1.3-linux-x86_64.tar.xz">
+    <img src="https://img.shields.io/badge/Download-ENCORE%20v0.1.3-6f42c1?style=for-the-badge&amp;logo=github" alt="Download ENCORE v0.1.3 for Linux">
   </a>
 </p>
 
@@ -35,7 +35,7 @@ ENCORE is a guided Wine compatibility setup for running supported Windows editio
 </p>
 
 <p align="center">
-  <a href="https://github.com/wowitsjack/ENCORE/releases/tag/v0.1.2">Release notes and checksums</a>
+  <a href="https://github.com/wowitsjack/ENCORE/releases/tag/v0.1.3">Release notes and checksums</a>
 </p>
 
 ### Before you start
@@ -53,9 +53,9 @@ You need:
 
 ### Install in five steps
 
-1. Click the **Download ENCORE v0.1.2** button above.
+1. Click the **Download ENCORE v0.1.3** button above.
 2. Open your Downloads folder and extract the `.tar.xz` archive.
-3. Move the extracted `ENCORE-v0.1.2-linux-x86_64` folder somewhere permanent and writable. A good choice is an `Applications` folder inside your Home folder; create it if it does not exist.
+3. Move the extracted `ENCORE-v0.1.3-linux-x86_64` folder somewhere permanent and writable. A good choice is an `Applications` folder inside your Home folder; create it if it does not exist.
 4. Open ENCORE in its permanent location, right-click an empty area, and choose **Open in Terminal**.
 5. Paste this command and press Enter:
 
@@ -117,7 +117,7 @@ Allow free space for the complete Live folder plus about 3.5 GiB for staging, th
 
 Each release publishes four files:
 
-- `ENCORE-v0.1.2-linux-x86_64.tar.xz`: the recommended turnkey package with ENCORE and Wine ready to use;
+- `ENCORE-v0.1.3-linux-x86_64.tar.xz`: the recommended turnkey package with ENCORE and Wine ready to use;
 - `encore-wine-11.13-r1-x86_64-linux-gnu.tar.xz`: the runtime-only asset used by the setup script;
 - `encore-wine-11.13-r1-source.tar.xz`: the complete corresponding patched Wine source and build instructions;
 - `SHA256SUMS`: checksums for all three archives.

@@ -6,7 +6,7 @@ on:
       release_version:
         description: ENCORE application release version to package
         required: true
-        default: v0.1.2
+        default: v0.1.3
         type: string
       artifact_run_id:
         description: Existing workflow run ID to validate without rebuilding Wine
