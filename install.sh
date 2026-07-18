@@ -1019,16 +1019,30 @@ run_logged()
 
 initialize_wine_prefix()
 {
+    local attempt waited
     mkdir -p "$prefix"
-    if ! WINEPREFIX="$prefix" WINEDEBUG=${WINEDEBUG:--all} \
-         "$wine" wineboot.exe -u; then
-        warn 'Wine requested a second prefix initialization pass.'
-        if ! WINEPREFIX="$prefix" WINEDEBUG=${WINEDEBUG:--all} \
-             "$wine" wineboot.exe -u; then
-            error 'Wine prefix initialization failed twice.'
-            return 1
-        fi
-    fi
+
+    for attempt in 1 2; do
+        WINEPREFIX="$prefix" WINEDEBUG=${WINEDEBUG:--all} \
+            "$wine" wineboot.exe -u || true
+        # wineboot can return before wineserver has actually finished writing
+        # the registry: it only requests first-run setup, it does not itself
+        # wait for that background work to complete. Poll briefly for the
+        # actual files rather than waiting for the wineserver process itself
+        # to fully exit - if a wineserver from a prior session in this same
+        # prefix is still resident (e.g. one just closed by the user, with
+        # its own helper processes like winedevice.exe still attached), it
+        # can persist far longer than this one registry write takes, and
+        # waiting for that whole session to end would hang unpredictably.
+        waited=0
+        while [[ ( ! -f $prefix/user.reg || ! -f $prefix/system.reg ) && $waited -lt 10 ]]; do
+            sleep 0.5
+            waited=$((waited + 1))
+        done
+        [[ -f $prefix/user.reg && -f $prefix/system.reg ]] && break
+        ((attempt == 1)) && warn 'Wine did not finish initializing the prefix on the first pass; retrying.'
+    done
+
     [[ -f $prefix/user.reg && -f $prefix/system.reg ]] || {
         error 'Wine did not finish initializing the prefix.'
         return 1
