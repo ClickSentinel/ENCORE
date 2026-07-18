@@ -1038,11 +1038,13 @@ initialize_wine_prefix()
 import_live_files()
 (
     set -Eeuo pipefail
-    local destination_parent staging backup=
+    local destination_parent staging_root staging backup=
     local backup_moved=0 new_published=0 committed=0 status cleanup_failed
     destination_parent=$(dirname -- "$live_destination")
     mkdir -p "$destination_parent"
-    staging=$(mktemp -d "$destination_parent/.encore-live-staging.XXXXXX")
+    staging_root=$(mktemp -d "$destination_parent/.encore-live-staging.XXXXXX")
+    staging="$staging_root/${live_destination##*/}"
+    mkdir -- "$staging"
 
     cleanup_import()
     {
@@ -1050,9 +1052,9 @@ import_live_files()
         trap - EXIT HUP INT TERM
         set +e
         cleanup_failed=0
-        if [[ -n ${staging:-} && -e $staging ]]; then
-            if ! rm -rf -- "$staging"; then
-                error "Could not remove incomplete staged copy: $staging"
+        if [[ -n ${staging_root:-} && -e $staging_root ]]; then
+            if ! rm -rf -- "$staging_root"; then
+                error "Could not remove incomplete staged copy: $staging_root"
                 cleanup_failed=1
             fi
         fi
