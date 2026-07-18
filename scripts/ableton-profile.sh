@@ -86,6 +86,80 @@ encore_ableton_profile_from_executable()
     return 0
 }
 
+encore_ableton_profile_from_installer()
+{
+    encore_ableton_profile_clear
+    _encore_ableton_installer=${1##*/}
+
+    case $_encore_ableton_installer in
+        'Ableton Live 11 Suite Installer.exe')
+            ENCORE_ABLETON_MAJOR=11
+            ENCORE_ABLETON_EDITION=Suite
+            ;;
+        'Ableton Live 11 Standard Installer.exe')
+            ENCORE_ABLETON_MAJOR=11
+            ENCORE_ABLETON_EDITION=Standard
+            ;;
+        'Ableton Live 11 Intro Installer.exe')
+            ENCORE_ABLETON_MAJOR=11
+            ENCORE_ABLETON_EDITION=Intro
+            ;;
+        'Ableton Live 11 Lite Installer.exe')
+            ENCORE_ABLETON_MAJOR=11
+            ENCORE_ABLETON_EDITION=Lite
+            ;;
+        'Ableton Live 11 Trial Installer.exe')
+            ENCORE_ABLETON_MAJOR=11
+            ENCORE_ABLETON_EDITION=Trial
+            ;;
+        'Ableton Live 12 Suite Installer.exe')
+            ENCORE_ABLETON_MAJOR=12
+            ENCORE_ABLETON_EDITION=Suite
+            ;;
+        'Ableton Live 12 Standard Installer.exe')
+            ENCORE_ABLETON_MAJOR=12
+            ENCORE_ABLETON_EDITION=Standard
+            ;;
+        'Ableton Live 12 Intro Installer.exe')
+            ENCORE_ABLETON_MAJOR=12
+            ENCORE_ABLETON_EDITION=Intro
+            ;;
+        'Ableton Live 12 Lite Installer.exe')
+            ENCORE_ABLETON_MAJOR=12
+            ENCORE_ABLETON_EDITION=Lite
+            ;;
+        'Ableton Live 12 Trial Installer.exe')
+            ENCORE_ABLETON_MAJOR=12
+            ENCORE_ABLETON_EDITION=Trial
+            ;;
+        *)
+            unset _encore_ableton_installer
+            return 1
+            ;;
+    esac
+
+    ENCORE_ABLETON_PRODUCT="Ableton Live $ENCORE_ABLETON_MAJOR"
+    if [ -n "$ENCORE_ABLETON_EDITION" ]; then
+        ENCORE_ABLETON_PRODUCT="$ENCORE_ABLETON_PRODUCT $ENCORE_ABLETON_EDITION"
+    fi
+    ENCORE_ABLETON_FOLDER=${ENCORE_ABLETON_PRODUCT#Ableton }
+    # The installer has not run yet, so there is no executable to inspect.
+    # Set the expected post-install name so callers can validate against it
+    # the same way as the already-installed-folder flow.
+    ENCORE_ABLETON_EXE="Ableton Live $ENCORE_ABLETON_MAJOR $ENCORE_ABLETON_EDITION.exe"
+    ENCORE_ABLETON_WM_CLASS=$(printf '%s' "$ENCORE_ABLETON_EXE" | tr '[:upper:]' '[:lower:]')
+    case $ENCORE_ABLETON_EDITION in
+        Suite) ENCORE_ABLETON_ICON_BASENAME=live_suite.ico ;;
+        Standard) ENCORE_ABLETON_ICON_BASENAME=live_standard.ico ;;
+        Intro) ENCORE_ABLETON_ICON_BASENAME=live_intro.ico ;;
+        Lite) ENCORE_ABLETON_ICON_BASENAME=live_lite.ico ;;
+        Trial) ENCORE_ABLETON_ICON_BASENAME=live_trial.ico ;;
+    esac
+
+    unset _encore_ableton_installer
+    return 0
+}
+
 encore_ableton_path_is_supported()
 {
     _encore_ableton_path=$1

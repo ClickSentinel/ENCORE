@@ -46,10 +46,10 @@ You need:
 - about 3.5 GiB of free space, plus the size of your Ableton installation;
 - an internet connection for dependencies and, with Live 12, the first WebView2 setup;
 - permission to use sudo if ENCORE needs to install missing system packages;
-- the complete **already-installed** application folder for a supported Ableton Live 11 or 12 edition from your own licensed Windows installation.
+- either the official downloaded Ableton Live 11 or 12 installer `.exe` from your own ableton.com account, or the complete **already-installed** application folder from your own licensed Windows installation.
 
 > [!IMPORTANT]
-> The downloaded Ableton installer is not enough. Install Live on Windows first, or extract your licensed installed copy another way, then copy the complete outer Live application folder to Linux. See [the required folder layout](#supplying-ableton-live).
+> With just the downloaded installer `.exe`, run `./install.sh --live-installer "/path/to/Ableton Live 12 Suite Installer.exe"` — ENCORE runs it for you inside the prefix. This needs a real terminal session; ENCORE currently drives the installer's graphical wizard rather than its silent-install flags, so `--non-interactive` cannot be combined with it. Alternatively, install Live on Windows first (or extract your licensed installed copy another way), then copy the complete outer Live application folder to Linux. See [the required folder layout](#supplying-ableton-live).
 
 ### Install in five steps
 
@@ -88,7 +88,17 @@ If setup is interrupted, run `./install.sh` again. ENCORE safely reuses complete
 
 ## Supplying Ableton Live
 
-ENCORE does not download, run, or bundle the Ableton installer. To create a new prefix, supply the complete outer application folder from an existing Windows installation. On a normal Windows installation it is under `C:\ProgramData\Ableton\`. You may instead supply the same complete application folder if you obtained it by extracting your own licensed installed copy another way.
+ENCORE does not download or bundle the Ableton installer, but it can run one you already have. There are two ways to get Live into a new prefix:
+
+**From the official installer.** Download Ableton Live 11 or 12 from your own ableton.com account, then point ENCORE at the `.exe` directly:
+
+```sh
+./install.sh --live-installer "/path/to/Ableton Live 12 Suite Installer.exe"
+```
+
+ENCORE runs the installer inside the prefix and imports the result automatically. This requires an interactive terminal — install to the default location and click Finish in the installer's own wizard, the same as on Windows. ENCORE drives the graphical wizard rather than the installer's own silent-install flags for now, so `--non-interactive` cannot be combined with `--live-installer`. `--dry-run` is exempt, since it only previews the plan without running anything.
+
+**From an already-installed folder.** Supply the complete outer application folder from an existing Windows installation instead. On a normal Windows installation it is under `C:\ProgramData\Ableton\`. You may instead supply the same complete application folder if you obtained it by extracting your own licensed installed copy another way.
 
 | Live version | Supported editions | Example matching folder and executable |
 | --- | --- | --- |
@@ -109,7 +119,7 @@ Live <version> <edition>/
 
 Do not select the folder containing the downloaded Ableton installer, the installer archive itself, a lone `.exe`, or only the inner `Program` subfolder. Those are not the complete installed application folder and ENCORE rejects them.
 
-ENCORE copies the complete folder into its Wine prefix, validates the copy before activating it, then installs the applicable prerequisites retained under `Redist`. ENCORE installs the retained Visual C++ runtime for Live 11 and 12. Live 12 also includes a small WebView2 bootstrapper that downloads the actual runtime, so a fresh Live 12 prefix needs an internet connection during this step. ENCORE does not reproduce unrelated Windows shell associations or device-driver registration.
+ENCORE copies the complete folder into its Wine prefix, validates the copy before activating it, then installs any prerequisites retained under `Redist` that Wine's own runtime doesn't already satisfy. In practice the bundled Visual C++ runtime is already present on ENCORE's Wine build for both versions, so that step is normally a no-op; Live 12's `Redist` also includes a small WebView2 bootstrapper that downloads the actual runtime, so a fresh Live 12 prefix needs an internet connection during this step. ENCORE does not reproduce unrelated Windows shell associations or device-driver registration.
 
 Allow free space for the complete Live folder plus about 3.5 GiB for staging, the Wine prefix, and applicable prerequisites. For Live 12, those prerequisites include Visual C++ and WebView2. ENCORE measures the selected folder and checks the destination before it starts copying.
 
@@ -180,7 +190,10 @@ Useful alternatives:
 ./install.sh --build-from-source --build-only --install-deps --jobs 4
 ./install.sh --no-build --dpi 96
 ./install.sh --prefix "$HOME/Music/Ableton Prefix"
+./install.sh --live-installer "/path/to/Ableton Live 12 Suite Installer.exe"
 ```
+
+`--live-installer` requires an interactive terminal (the official installer is a graphical wizard, not scriptable), so it cannot combine with `--non-interactive`. `--dry-run` is the exception — it previews the plan without running anything, so it works either way.
 
 ENCORE refuses to modify a non-empty prefix it does not recognize. Inspect the folder first, then pass `--adopt-prefix` only when you deliberately want ENCORE to own it.
 
@@ -198,7 +211,7 @@ Live's **Settings > Plug-ins > VST3 Custom Folder > Browse** control uses the na
 ## Known limitations
 
 - GNOME/Wayland/Xwayland is the primary tested window-management path; other desktops remain experimental.
-- Live 11's installed folder retains the Visual C++ 2015-2019 setup but not the separate Visual C++ 2013 setup chained by Ableton's original installer. ENCORE uses Wine's built-in Visual C++ 2013 compatibility for those components.
+- Live 11's installed folder does not retain a Visual C++ setup under `Redist` at all. ENCORE relies on Wine's built-in Visual C++ compatibility for it instead.
 - Live 12 WebView2 currently requires `--no-sandbox` under this Wine build, weakening isolation for the remote Learn View page.
 - DirectComposition is disabled; Live 12 Learn View uses SwiftShader and CPU compositing.
 - Binary releases currently target x86-64 Linux. ARM64 and 32-bit Wine builds are not provided.

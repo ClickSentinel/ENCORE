@@ -34,6 +34,8 @@ configure_only=0
 install_desktop=1
 launch_policy=ask
 live_source=${ABLETON_LIVE_DIR:-}
+live_installer=${ABLETON_LIVE_INSTALLER:-}
+live_installer_cli_set=0
 live_destination=
 live_source_size_kib=0
 live_required_space_kib=0
@@ -51,6 +53,11 @@ validated_live_folder=
 validated_live_executable_name=
 validated_live_vc_setup=
 validated_live_webview_setup=
+validated_installer_major=
+validated_installer_edition=
+validated_installer_folder=
+validated_installer_executable_name=
+validated_installer_product=
 prefix=${ENCORE_PREFIX:-$DEFAULT_PREFIX}
 wine=${ENCORE_WINE:-$DEFAULT_WINE}
 ableton=${ENCORE_ABLETON:-}
@@ -82,6 +89,10 @@ detects your system and walks you through every choice.
 
 Setup options:
   --live-dir DIR         Complete Windows-installed Live 11 or 12 folder
+  --live-installer FILE  Official downloaded Ableton Live 11 or 12 installer
+                         .exe; ENCORE runs it inside the prefix and imports
+                         the result. Requires an interactive terminal, since
+                         the installer is its own graphical wizard.
   --prefix DIR           Wine prefix (default: ./ableton-prefix)
   --ableton FILE         Existing Ableton executable inside the prefix
   --adopt-prefix         Allow use of a non-empty, unrecognized prefix
@@ -144,6 +155,24 @@ while (($#)); do
             }
             live_source=${1#*=}
             live_source_cli_set=1
+            ;;
+        --live-installer)
+            need_value "$1" "${2:-}"
+            [[ $live_installer_cli_set -eq 0 ]] || {
+                printf 'ENCORE: only one Ableton Live installer may be supplied\n' >&2
+                exit 2
+            }
+            live_installer=$2
+            live_installer_cli_set=1
+            shift
+            ;;
+        --live-installer=*)
+            [[ $live_installer_cli_set -eq 0 ]] || {
+                printf 'ENCORE: only one Ableton Live installer may be supplied\n' >&2
+                exit 2
+            }
+            live_installer=${1#*=}
+            live_installer_cli_set=1
             ;;
         --prefix)
             need_value "$1" "${2:-}"
@@ -278,6 +307,14 @@ done
 
 if [[ -n $scale && -n $dpi ]]; then
     printf 'ENCORE: use either --scale or --dpi, not both\n' >&2
+    exit 2
+fi
+if [[ $live_source_cli_set -eq 1 && $live_installer_cli_set -eq 1 ]]; then
+    printf 'ENCORE: use either --live-dir or --live-installer, not both\n' >&2
+    exit 2
+fi
+if [[ -n $live_installer && $interactive -eq 0 && $dry_run -eq 0 ]]; then
+    printf 'ENCORE: --live-installer requires an interactive terminal; the official installer is a graphical wizard with no known silent-install mode. Use --live-dir with a non-interactive setup instead. (--dry-run is exempt, since it only previews the plan.)\n' >&2
     exit 2
 fi
 if [[ $wine_explicit -eq 1 && $build_mode == auto ]]; then
@@ -807,16 +844,50 @@ validate_live_source()
         live_source_error="The installed Live folder does not contain the expected ${validated_live_edition} application icon under Resources/Icons."
         return 1
     fi
+    # Not all Live versions bundle a VC++ redistributable under Redist (Live 11
+    # does not); install_vc_runtime() only needs this file if the runtime isn't
+    # already satisfied by Wine's own builtins, so its absence here isn't
+    # itself a validation failure.
     validated_live_vc_setup=$(find_vc_setup "$candidate" || true)
-    if [[ -z $validated_live_vc_setup ]]; then
-        live_source_error='The installed Live folder does not contain a supported Visual C++ redistributable under Redist.'
-        return 1
-    fi
     validated_live_webview_setup=$(find_webview2_setup "$candidate" || true)
     if [[ $validated_live_major == 12 && -z $validated_live_webview_setup ]]; then
         live_source_error='This Live 12 folder is missing the WebView2 setup program under Redist.'
         return 1
     fi
+}
+
+live_installer_error=
+
+validate_live_installer()
+{
+    local candidate=$1
+    live_installer_error=
+
+    if [[ -d $candidate ]]; then
+        live_installer_error='That path is a folder. Select the downloaded Ableton Live installer .exe file, or use --live-dir for an already-installed folder.'
+        return 1
+    fi
+    if [[ ! -f $candidate ]]; then
+        live_installer_error="Ableton Live installer not found: $candidate"
+        return 1
+    fi
+    if [[ -L $candidate ]]; then
+        live_installer_error='The installer path may not be a symbolic link.'
+        return 1
+    fi
+    if [[ ! -s $candidate ]]; then
+        live_installer_error='The selected installer file is empty.'
+        return 1
+    fi
+    if ! encore_ableton_profile_from_installer "$candidate"; then
+        live_installer_error='That does not look like an official Ableton Live 11 or 12 installer. Expected a filename like "Ableton Live 12 Suite Installer.exe", exactly as downloaded from your ableton.com account.'
+        return 1
+    fi
+    validated_installer_major=$ENCORE_ABLETON_MAJOR
+    validated_installer_edition=$ENCORE_ABLETON_EDITION
+    validated_installer_folder=$ENCORE_ABLETON_FOLDER
+    validated_installer_executable_name=$ENCORE_ABLETON_EXE
+    validated_installer_product=$ENCORE_ABLETON_PRODUCT
 }
 
 find_live_sources()
@@ -1087,6 +1158,14 @@ initialize_wine_prefix()
         error 'Wine did not finish initializing the prefix.'
         return 1
     }
+
+    # ENCORE ships its own launcher/desktop entry. Without this, Wine's
+    # winemenubuilder.exe mirrors any Start Menu shortcuts the Windows
+    # installer creates into a second, separate .desktop entry, so Ableton
+    # would show up twice in the app menu.
+    WINEPREFIX="$prefix" WINEDEBUG=${WINEDEBUG:--all} \
+        "$wine" reg add 'HKEY_CURRENT_USER\Software\Wine\DllOverrides' \
+        /v winemenubuilder.exe /t REG_SZ /d '' /f >/dev/null 2>&1 || true
 }
 
 import_live_files()
@@ -1192,6 +1271,67 @@ import_live_files()
     fi
     trap - EXIT HUP INT TERM
 )
+
+run_ableton_installer()
+{
+    local status=0
+
+    if [[ -e $live_destination || -L $live_destination ]]; then
+        if [[ $replace_live -ne 1 ]]; then
+            error "Ableton Live already exists at $live_destination"
+            return 1
+        fi
+        rm -rf -- "$live_destination"
+    fi
+
+    say "Running the official installer: $live_installer"
+    say 'This is Ableton'"'"'s own graphical installer wizard. Install to the'
+    say 'default location and click Finish; setup continues automatically'
+    say 'once the installer window closes.'
+
+    # The installer's tlsetupfx stage always crashes attempting to install
+    # Ableton's own kernel-mode audio driver (AbletonAudioapi/AbletonAudioasio):
+    # it calls the Windows kernel API ZwLoadDriver, which Wine - a userspace
+    # compatibility layer with no real NT kernel - can only ever fail or stub
+    # out. tlsetupfx does not check for that failure before dereferencing the
+    # result, and null-derefs. This is a permanent Wine limitation, not
+    # something fixable from here (confirmed: the identical tlsetupfx crash is
+    # independently documented for other, unrelated audio hardware installers
+    # under Wine, e.g. https://github.com/bottlesdevs/programs/issues/310 and
+    # https://forum.winehq.org/viewtopic.php?p=144587). The driver is
+    # Ableton's own native ASIO-hardware path and is not needed to run Ableton
+    # under Wine, so suppress the resulting blocking crash dialog rather than
+    # requiring the user to manually close it twice on every install.
+    WINEPREFIX="$prefix" WINEDEBUG=${WINEDEBUG:--all} \
+        "$wine" reg add "HKCU\Software\Wine\WineDbg" /v ShowCrashDialog /t REG_DWORD /d 0 /f \
+        >/dev/null 2>&1 || true
+
+    # The installer's own regsvr32 output and Wine's "Unhandled page fault"
+    # message for the known tlsetupfx crash above are not gated by WINEDEBUG
+    # (regsvr32 prints directly to stdout regardless of debug channels, and
+    # Wine's core exception handler prints that line unconditionally). Send
+    # this command's output straight to the log instead of the console so a
+    # normal install isn't cluttered with expected, already-handled noise;
+    # the full detail is still available in the log if something looks wrong.
+    WINEPREFIX="$prefix" WINEDEBUG=${WINEDEBUG:--all} \
+        "$wine" "$live_installer" >>"$log_file" 2>&1 || status=$?
+    # The installer's own UI subprocess is known to report a nonzero exit or
+    # crash even when the underlying installation completed successfully, so
+    # exit status alone is not a reliable success signal. Whether Ableton
+    # actually landed at the expected path is the real gate.
+    ((status == 0)) ||
+        warn "The installer reported exit status $status; checking whether Ableton actually installed before treating this as fatal."
+
+    [[ -s $ableton ]] || {
+        error "Ableton was not found at $ableton after running the installer. If the installer window is still open, finish clicking through it and rerun setup."
+        return 1
+    }
+
+    if ! validate_live_source "$live_destination"; then
+        error "The installed Live folder failed validation: $live_source_error"
+        return 1
+    fi
+}
 
 vc_runtime_ready()
 {
@@ -1441,6 +1581,26 @@ configure_target_from_validated_source()
     fi
 }
 
+configure_target_from_validated_installer()
+{
+    local target
+    [[ -n $validated_installer_folder ]] ||
+        die 'Internal error: the selected Live installer has no detected profile.'
+
+    if [[ $ableton_cli_set -eq 1 ]]; then
+        target=$ableton
+    else
+        target="$prefix/drive_c/ProgramData/Ableton/$validated_installer_folder/Program/$validated_installer_executable_name"
+    fi
+    configure_live_target "$target"
+    if [[ $live_major != "$validated_installer_major" ||
+          $live_edition != "$validated_installer_edition" ||
+          $live_folder != "$validated_installer_folder" ||
+          $live_executable_name != "$validated_installer_executable_name" ]]; then
+        die "The configured Ableton path identifies $live_product, but the selected installer is for $validated_installer_product. Use matching paths or omit the ENCORE_ABLETON/--ableton override."
+    fi
+}
+
 find_prefix_ableton_executables()
 {
     local search_root="$prefix/drive_c/ProgramData/Ableton" executable
@@ -1485,6 +1645,7 @@ normalize_configuration()
     reject_path_controls 'Wine executable path' "$wine"
     [[ -z $ableton ]] || reject_path_controls 'Ableton executable path' "$ableton"
     [[ -z $live_source ]] || reject_path_controls 'Ableton Live source folder' "$live_source"
+    [[ -z $live_installer ]] || reject_path_controls 'Ableton Live installer path' "$live_installer"
     prefix=$(absolute_path "$prefix")
     wine=$(absolute_path "$wine")
     if [[ -n $live_source ]]; then
@@ -1493,12 +1654,21 @@ normalize_configuration()
         [[ -n $cleaned_source ]] || die 'The Ableton Live source folder may not be empty'
         live_source=$(absolute_path "$cleaned_source")
     fi
+    if [[ -n $live_installer ]]; then
+        cleaned_source=$(clean_path_input "$live_installer") ||
+            die 'The Ableton Live installer file URL could not be read.'
+        [[ -n $cleaned_source ]] || die 'The Ableton Live installer path may not be empty'
+        live_installer=$(absolute_path "$cleaned_source")
+    fi
 
     [[ $build_only -eq 0 ]] || return 0
 
     if [[ -n $live_source ]]; then
         validate_live_source "$live_source" || die "$live_source_error"
         configure_target_from_validated_source
+    elif [[ -n $live_installer ]]; then
+        validate_live_installer "$live_installer" || die "$live_installer_error"
+        configure_target_from_validated_installer
     elif [[ -n $ableton ]]; then
         configure_live_target "$ableton"
     else
@@ -1668,16 +1838,21 @@ prepare_choices()
             fi
         fi
 
-        if [[ $replace_live -eq 1 && -z $live_source ]]; then
-            die '--replace-live requires --live-dir DIR'
+        local have_new_source=0
+        [[ -z $live_source && -z $live_installer ]] || have_new_source=1
+
+        if [[ $replace_live -eq 1 && $have_new_source -eq 0 ]]; then
+            die '--replace-live requires --live-dir DIR or --live-installer FILE'
         fi
 
-        if [[ $existing_live -eq 1 && -n $live_source && $replace_live -eq 0 ]]; then
+        if [[ $existing_live -eq 1 && $have_new_source -eq 1 && $replace_live -eq 0 ]]; then
             heading 'Existing Ableton installation'
             ok "Found a complete Ableton Live installation at $live_destination"
             if [[ $interactive -eq 1 ]]; then
-                if ask_yes_no 'Reuse it and ignore the supplied source folder?' yes; then
+                if ask_yes_no 'Reuse it and ignore the supplied source?' yes; then
                     live_source=
+                    live_installer=
+                    have_new_source=0
                     reuse_decided=1
                 else
                     replace_live=1
@@ -1685,6 +1860,8 @@ prepare_choices()
             else
                 info 'Reusing it for a safe retry; use --replace-live to replace it explicitly.'
                 live_source=
+                live_installer=
+                have_new_source=0
                 reuse_decided=1
             fi
         fi
@@ -1694,13 +1871,14 @@ prepare_choices()
             warn "The existing folder is incomplete: $live_destination"
             warn "$live_source_error"
             if [[ $interactive -eq 0 && $replace_live -eq 0 ]]; then
-                die 'Refusing to merge into an incomplete Live folder. Rerun with --replace-live and --live-dir DIR.'
+                die 'Refusing to merge into an incomplete Live folder. Rerun with --replace-live and --live-dir DIR (or --live-installer FILE).'
             fi
-            if [[ -z $live_source ]]; then
+            if [[ $have_new_source -eq 0 ]]; then
                 if [[ $interactive -eq 1 ]]; then
                     choose_live_source
+                    have_new_source=1
                 else
-                    die 'Ableton is not installed. Supply --live-dir "/path/to/Live 11 Standard" (or your matching version and edition).'
+                    die 'Ableton is not installed. Supply --live-dir "/path/to/Live 11 Standard" (or your matching version and edition), or --live-installer FILE.'
                 fi
             fi
             if [[ $replace_live -eq 0 ]]; then
@@ -1710,7 +1888,7 @@ prepare_choices()
             fi
         fi
 
-        if [[ -z $live_source ]]; then
+        if [[ $have_new_source -eq 0 ]]; then
             if [[ $existing_live -eq 1 ]]; then
                 if [[ $interactive -eq 1 && $reuse_decided -eq 0 ]]; then
                     heading 'Existing Ableton installation'
@@ -1723,7 +1901,7 @@ prepare_choices()
             elif [[ $interactive -eq 1 ]]; then
                 choose_live_source
             else
-                die 'Ableton is not installed. Supply --live-dir "/path/to/Live 11 Standard" (or your matching version and edition).'
+                die 'Ableton is not installed. Supply --live-dir "/path/to/Live 11 Standard" (or your matching version and edition), or --live-installer FILE.'
             fi
         fi
 
@@ -1732,9 +1910,13 @@ prepare_choices()
             configure_target_from_validated_source
             validate_import_paths
             inspect_live_import_space
+        elif [[ -n $live_installer ]]; then
+            validate_live_installer "$live_installer" || die "$live_installer_error"
+            configure_target_from_validated_installer
         fi
     else
         live_source=
+        live_installer=
         replace_live=0
     fi
 
@@ -1810,10 +1992,12 @@ show_plan()
         say "  Wine prefix:        $prefix"
         say "  Ableton product:    $live_product"
         say "  Ableton executable: $ableton"
-        say "  Ableton source:     ${live_source:-reuse existing prefix copy}"
+        say "  Ableton source:     ${live_source:-${live_installer:-reuse existing prefix copy}}"
         if [[ -n $live_source ]]; then
             say "  Import size:        about $(((live_source_size_kib + 1048575) / 1048576)) GiB"
             say "  Free space needed:  about $(((live_required_space_kib + 1048575) / 1048576)) GiB"
+            say "  Existing Live:      $([[ $replace_live -eq 1 ]] && printf 'replace safely' || printf 'not present')"
+        elif [[ -n $live_installer ]]; then
             say "  Existing Live:      $([[ $replace_live -eq 1 ]] && printf 'replace safely' || printf 'not present')"
         fi
         say "  Display scaling:    $dpi DPI ($((dpi * 100 / 96))% approximate)"
@@ -1835,6 +2019,12 @@ show_plan()
             info 'Live is imported by copying the complete installed folder. WebView2 may download its runtime afterward.'
         else
             info 'Live is imported by copying the complete installed folder.'
+        fi
+    elif [[ -n $live_installer ]]; then
+        if [[ $live_requires_webview2 -eq 1 ]]; then
+            info 'Live is installed by running the official installer inside the prefix. It is a graphical wizard: install to the default location and click Finish when it appears. WebView2 may download its runtime afterward.'
+        else
+            info 'Live is installed by running the official installer inside the prefix. It is a graphical wizard: install to the default location and click Finish when it appears.'
         fi
     fi
 
@@ -1923,16 +2113,20 @@ main()
     export ENCORE_PREFIX=$prefix ENCORE_WINE=$wine ENCORE_ABLETON=$ableton
     pause_for_live_to_close
     run_stage 'Register the ENCORE prefix' mark_prefix
+    run_stage 'Initialize the Wine prefix' initialize_wine_prefix
 
     if [[ -n $live_source ]]; then
         run_stage 'Import Ableton Live files' import_live_files
         [[ -s $ableton ]] ||
             die "The Ableton Live files were imported, but Live was not found at $ableton"
+    elif [[ -n $live_installer ]]; then
+        run_stage 'Run the Ableton installer' run_ableton_installer
+        [[ -s $ableton ]] ||
+            die "The Ableton installer finished, but Live was not found at $ableton"
     else
         ok 'Reusing Ableton Live already in the prefix'
     fi
 
-    run_stage 'Initialize the Wine prefix' initialize_wine_prefix
     run_stage 'Install the Visual C++ runtime' install_vc_runtime
     if [[ $live_requires_webview2 -eq 1 ]]; then
         run_stage 'Install the WebView2 Runtime' install_webview2_runtime
@@ -1960,6 +2154,16 @@ main()
     say "  Log:    $log_file"
     say
     say "Launch later with: $ROOT/scripts/launch-ableton.sh"
+    if [[ -n $live_source || -n $live_installer ]]; then
+        say
+        warn 'On its first launch with a fresh Live folder, Ableton scans and'
+        warn 'indexes its content library, including computing sound-similarity'
+        warn 'data for all factory content. This can take several minutes, and'
+        warn 'Ableton may become unresponsive or even crash during this first'
+        warn 'scan - this is normal and not specific to ENCORE. If that happens,'
+        warn 'just close it and relaunch; the indexing already done is kept, and'
+        warn 'the next launch is normal.'
+    fi
 
     local launch_now=0
     case $launch_policy in
