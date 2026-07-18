@@ -16,8 +16,8 @@ fi
 
 mkdir -p "$ROOT/logs"
 
-if "$PROCESS_CHECK" "$ABLETON"; then
+if [ "$#" -eq 0 ] && "$PROCESS_CHECK" "$ABLETON"; then
     exit 0
 fi
 
-exec "$SCRIPT_DIR/run-ableton.sh" >>"$LOG" 2>&1
+exec "$SCRIPT_DIR/run-ableton.sh" "$@" >>"$LOG" 2>&1
