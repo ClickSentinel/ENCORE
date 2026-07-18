@@ -11,7 +11,7 @@ expected_base=${expected##*/}
 
 for command_line in /proc/[0-9]*/cmdline; do
     [ -r "$command_line" ] || continue
-    executable=$(tr '\000' '\n' < "$command_line" 2>/dev/null | sed -n '1p') || continue
+    executable=$(tr '\000' '\n' 2>/dev/null < "$command_line" | sed -n '1p') || continue
     # Direct match: the process still carries the path it was launched with.
     [ "$executable" = "$expected" ] && exit 0
     # Wine rewrites argv[0] to the application's DOS path. Compare basenames

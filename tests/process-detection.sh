@@ -55,14 +55,22 @@ stop_process()
 
 assert_running()
 {
-    "$PROCESS_CHECK" "$1" || fail "expected running process: $1"
+    local stderr_file="$TEST_ROOT/process-check.stderr"
+
+    : > "$stderr_file"
+    "$PROCESS_CHECK" "$1" 2>"$stderr_file" || fail "expected running process: $1"
+    [[ ! -s $stderr_file ]] || fail "process check wrote to stderr: $(<"$stderr_file")"
 }
 
 assert_not_running()
 {
-    if "$PROCESS_CHECK" "$1"; then
+    local stderr_file="$TEST_ROOT/process-check.stderr"
+
+    : > "$stderr_file"
+    if "$PROCESS_CHECK" "$1" 2>"$stderr_file"; then
         fail "unexpected running process: $1"
     fi
+    [[ ! -s $stderr_file ]] || fail "process check wrote to stderr: $(<"$stderr_file")"
 }
 
 command -v python3 >/dev/null 2>&1 || fail 'python3 is required for this test'
