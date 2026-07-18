@@ -462,7 +462,8 @@ detect_distro()
 
 detect_dpi()
 {
-    local factor=0 resolution width height
+    local factor=0 xrandr_line resolution width height
+    local mm_width mm_height ppi
     dpi_recommendation=96
     dpi_reason='standard 100% scaling fallback'
 
@@ -477,16 +478,55 @@ detect_dpi()
     fi
 
     if command -v xrandr >/dev/null 2>&1 && [[ -n ${DISPLAY:-} ]]; then
-        resolution=$(xrandr --current 2>/dev/null |
-            awk '/ connected primary / {for (i=1;i<=NF;i++) if ($i ~ /^[0-9]+x[0-9]+\+/) {print $i; exit}}')
-        if [[ -z $resolution ]]; then
-            resolution=$(xrandr --current 2>/dev/null |
-                awk '/ connected / {for (i=1;i<=NF;i++) if ($i ~ /^[0-9]+x[0-9]+\+/) {print $i; exit}}')
+        xrandr_line=$(xrandr --current 2>/dev/null | awk '/ connected primary / {print; exit}')
+        if [[ -z $xrandr_line ]]; then
+            xrandr_line=$(xrandr --current 2>/dev/null | awk '/ connected / {print; exit}')
         fi
+
+        resolution=$(awk '{for (i=1;i<=NF;i++) if ($i ~ /^[0-9]+x[0-9]+\+/) {print $i; exit}}' <<<"$xrandr_line")
         resolution=${resolution%%+*}
+        # xrandr reports physical size as "<width>mm x <height>mm" at the end
+        # of the connected line, e.g. "600mm x 340mm". Scan left-to-right for
+        # the first "<n>mm" token (width) and right-to-left for the last
+        # (height), since the literal "x" between them isn't itself a token
+        # ending in "mm".
+        mm_width=$(awk '{for (i=1;i<=NF;i++) if ($i ~ /^[0-9]+mm$/) {print $i; exit}}' <<<"$xrandr_line")
+        mm_width=${mm_width%mm}
+        mm_height=$(awk '{for (i=NF;i>=1;i--) if ($i ~ /^[0-9]+mm$/) {print $i; exit}}' <<<"$xrandr_line")
+        mm_height=${mm_height%mm}
+
         if [[ $resolution =~ ^([0-9]+)x([0-9]+)$ ]]; then
             width=${BASH_REMATCH[1]}
             height=${BASH_REMATCH[2]}
+
+            if [[ $mm_width =~ ^[0-9]+$ && $mm_height =~ ^[0-9]+$ ]] &&
+               ((mm_width > 0 && mm_height > 0)); then
+                # Physical size lets us calculate real pixel density, which
+                # resolution alone cannot: a small high-density panel and a
+                # large desktop monitor can share the same pixel resolution
+                # (e.g. 2560x1440 on both a 14" laptop and a 27" monitor) but
+                # need very different scaling. 254 = 25.4mm/inch * 10, kept
+                # in integer arithmetic by scaling mm_width by 10 too.
+                ppi=$(( (width * 254) / (mm_width * 10) ))
+                dpi_reason="a calculated ${ppi} PPI display was detected"
+                if ((ppi >= 240)); then
+                    dpi_recommendation=240
+                elif ((ppi >= 192)); then
+                    dpi_recommendation=192
+                elif ((ppi >= 168)); then
+                    dpi_recommendation=168
+                elif ((ppi >= 144)); then
+                    dpi_recommendation=144
+                elif ((ppi >= 120)); then
+                    dpi_recommendation=120
+                else
+                    dpi_recommendation=96
+                fi
+                return
+            fi
+
+            # Physical size wasn't reported (some virtual/projector outputs
+            # report 0mm x 0mm) - fall back to the resolution-only guess.
             if ((width >= 3000 && height >= 1700)); then
                 dpi_recommendation=192
                 dpi_reason="a ${width}x${height} HiDPI display was detected"
