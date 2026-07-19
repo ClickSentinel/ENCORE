@@ -1,5 +1,5 @@
 diff --git a/dlls/comdlg32/Makefile.in b/dlls/comdlg32/Makefile.in
-index 4de12ae3487c357a6ca53be43ac5d9600253a5a8..c696696f008646baa713d0e3d72c285e94095f97 100644
+index 4de12ae348..c696696f00 100644
 --- a/dlls/comdlg32/Makefile.in
 +++ b/dlls/comdlg32/Makefile.in
 @@ -3,6 +3,8 @@ MODULE    = comdlg32.dll
@@ -20,7 +20,7 @@ index 4de12ae3487c357a6ca53be43ac5d9600253a5a8..c696696f008646baa713d0e3d72c285e
 +	portal_dbus.c \
 +	unixlib.c
 diff --git a/dlls/comdlg32/cdlg.h b/dlls/comdlg32/cdlg.h
-index 79c951d1391e20323f7bc4b36e760c4fc0fe9da2..1922d60069565601cbee8e6ca0d313801f4b7b51 100644
+index 79c951d139..1922d60069 100644
 --- a/dlls/comdlg32/cdlg.h
 +++ b/dlls/comdlg32/cdlg.h
 @@ -30,6 +30,7 @@ extern HINSTANCE COMDLG32_hInstance;
@@ -32,7 +32,7 @@ index 79c951d1391e20323f7bc4b36e760c4fc0fe9da2..1922d60069565601cbee8e6ca0d31380
  /* Find/Replace local definitions */
  
 diff --git a/dlls/comdlg32/cdlg32.c b/dlls/comdlg32/cdlg32.c
-index b311565030229192acfe2a94b41cf210ee460323..fddd8939ba583556d34f15b64570c2abee5a1793 100644
+index b311565030..fddd8939ba 100644
 --- a/dlls/comdlg32/cdlg32.c
 +++ b/dlls/comdlg32/cdlg32.c
 @@ -32,6 +32,7 @@
@@ -75,7 +75,7 @@ index b311565030229192acfe2a94b41cf210ee460323..fddd8939ba583556d34f15b64570c2ab
  		actctx.hModule = COMDLG32_hInstance;
  		actctx.lpResourceName = MAKEINTRESOURCEW(123);
 diff --git a/dlls/comdlg32/filedlg.c b/dlls/comdlg32/filedlg.c
-index 9d573759445a40619626ca2f31f6c50834c72de6..a3b1a1edae8c9c00c642aedfba9950ca4f0ae120 100644
+index 9d57375944..a3b1a1edae 100644
 --- a/dlls/comdlg32/filedlg.c
 +++ b/dlls/comdlg32/filedlg.c
 @@ -52,6 +52,7 @@
@@ -336,10 +336,11 @@ index 9d573759445a40619626ca2f31f6c50834c72de6..a3b1a1edae8c9c00c642aedfba9950ca
      if (is_win16_looks(ofn->Flags))
          return GetFileName31A(ofn, OPEN_DIALOG);
      else
-@@ -4155,6 +4302,250 @@ BOOL WINAPI GetOpenFileNameA(OPENFILENAMEA *ofn)
+@@ -4154,6 +4301,250 @@ BOOL WINAPI GetOpenFileNameA(OPENFILENAMEA *ofn)
+     }
  }
  
- /***********************************************************************
++/***********************************************************************
 + * XDG Desktop Portal Integration
 + */
 +
@@ -583,10 +584,9 @@ index 9d573759445a40619626ca2f31f6c50834c72de6..a3b1a1edae8c9c00c642aedfba9950ca
 +    return TRUE;
 +}
 +
-+/***********************************************************************
+ /***********************************************************************
   *            GetOpenFileNameW (COMDLG32.@)
   *
-  * Creates a dialog box for the user to select a file to open.
 @@ -4166,7 +4557,10 @@ BOOL WINAPI GetOpenFileNameA(OPENFILENAMEA *ofn)
   */
  BOOL WINAPI GetOpenFileNameW(OPENFILENAMEW *ofn)
@@ -895,7 +895,7 @@ index 9d573759445a40619626ca2f31f6c50834c72de6..a3b1a1edae8c9c00c642aedfba9950ca
          return GetFileName31W(ofn, SAVE_DIALOG);
      else
 diff --git a/dlls/comdlg32/itemdlg.c b/dlls/comdlg32/itemdlg.c
-index 6e47cb12ca5ee979329ba2cb13d39e8840a47ad2..162b362bd8c10f80bf87a621b4c680d2f754eecf 100644
+index 6e47cb12ca..162b362bd8 100644
 --- a/dlls/comdlg32/itemdlg.c
 +++ b/dlls/comdlg32/itemdlg.c
 @@ -21,6 +21,7 @@
@@ -1721,7 +1721,7 @@ index 6e47cb12ca5ee979329ba2cb13d39e8840a47ad2..162b362bd8c10f80bf87a621b4c680d2
  
 diff --git a/dlls/comdlg32/portal_dbus.c b/dlls/comdlg32/portal_dbus.c
 new file mode 100644
-index 0000000000000000000000000000000000000000..c9dd517f266185d9933b603fc3cf04f6c6f34fcf
+index 0000000000..c9dd517f26
 --- /dev/null
 +++ b/dlls/comdlg32/portal_dbus.c
 @@ -0,0 +1,1193 @@
@@ -2920,7 +2920,7 @@ index 0000000000000000000000000000000000000000..c9dd517f266185d9933b603fc3cf04f6
 +}
 diff --git a/dlls/comdlg32/unixlib.c b/dlls/comdlg32/unixlib.c
 new file mode 100644
-index 0000000000000000000000000000000000000000..89ce9b37f3a9f4d2d4520369f1611d279a3a0a1a
+index 0000000000..89ce9b37f3
 --- /dev/null
 +++ b/dlls/comdlg32/unixlib.c
 @@ -0,0 +1,68 @@
@@ -2994,7 +2994,7 @@ index 0000000000000000000000000000000000000000..89ce9b37f3a9f4d2d4520369f1611d27
 +C_ASSERT( ARRAYSIZE(__wine_unix_call_funcs) == unix_portal_is_available + 1 );
 diff --git a/dlls/comdlg32/unixlib.h b/dlls/comdlg32/unixlib.h
 new file mode 100644
-index 0000000000000000000000000000000000000000..7423da909cc08aecca3addaf71e105b684691f33
+index 0000000000..7423da909c
 --- /dev/null
 +++ b/dlls/comdlg32/unixlib.h
 @@ -0,0 +1,63 @@
@@ -3062,7 +3062,7 @@ index 0000000000000000000000000000000000000000..7423da909cc08aecca3addaf71e105b6
 +
 +#endif /* __WINE_COMDLG32_UNIXLIB_H */
 diff --git a/dlls/dxgi/output.c b/dlls/dxgi/output.c
-index e828ed0d9d87e4d1ca8f91136371fefed310c4ff..895c59872830aae9a1fa00f567106fce97c23880 100644
+index e828ed0d9d..895c598728 100644
 --- a/dlls/dxgi/output.c
 +++ b/dlls/dxgi/output.c
 @@ -17,6 +17,7 @@
@@ -3123,8 +3123,32 @@ index e828ed0d9d87e4d1ca8f91136371fefed310c4ff..895c59872830aae9a1fa00f567106fce
  }
  
  static HRESULT STDMETHODCALLTYPE dxgi_output_TakeOwnership(IDXGIOutput6 *iface, IUnknown *device, BOOL exclusive)
+diff --git a/dlls/dxgi/swapchain.c b/dlls/dxgi/swapchain.c
+index eee4a2a42b..dfa63b6a6d 100644
+--- a/dlls/dxgi/swapchain.c
++++ b/dlls/dxgi/swapchain.c
+@@ -2626,8 +2626,17 @@ static HRESULT d3d12_swapchain_resize_buffers(struct d3d12_swapchain *swapchain,
+     if (!width || !height)
+     {
+         RECT client_rect;
+-
+-        if (!GetClientRect(swapchain->window, &client_rect))
++        BOOL ret;
++
++        /* Swapchain buffers are sized in the window's physical pixels; map the
++         * client rect through the window's DPI context, not the caller's (a
++         * DPI-unaware ResizeBuffers(0, 0) would otherwise halve the buffers
++         * under a per-monitor-aware window). */
++        DPI_AWARENESS_CONTEXT prev = SetThreadDpiAwarenessContext(
++                GetWindowDpiAwarenessContext(swapchain->window));
++        ret = GetClientRect(swapchain->window, &client_rect);
++        SetThreadDpiAwarenessContext(prev);
++        if (!ret)
+         {
+             WARN("Failed to get client rect, last error %#lx.\n", GetLastError());
+             return DXGI_ERROR_INVALID_CALL;
 diff --git a/dlls/dxgi/tests/dxgi.c b/dlls/dxgi/tests/dxgi.c
-index 518fe47cbd8b0a247d804c2b9b2de0986657fb5b..f86e74bbd0f56b3adbfd847eb64e1d3d68c5350a 100644
+index 518fe47cbd..f86e74bbd0 100644
 --- a/dlls/dxgi/tests/dxgi.c
 +++ b/dlls/dxgi/tests/dxgi.c
 @@ -1405,6 +1405,8 @@ static void test_parents(void)
@@ -3156,8 +3180,54 @@ index 518fe47cbd8b0a247d804c2b9b2de0986657fb5b..f86e74bbd0f56b3adbfd847eb64e1d3d
      hr = IDXGIOutput_GetDisplayModeList(output, DXGI_FORMAT_R8G8B8A8_UNORM, 0, NULL, NULL);
      ok(hr == DXGI_ERROR_INVALID_CALL, "Got unexpected hr %#lx.\n", hr);
  
+diff --git a/dlls/mmdevapi/devenum.c b/dlls/mmdevapi/devenum.c
+index 11d20f2995..9db855b35d 100644
+--- a/dlls/mmdevapi/devenum.c
++++ b/dlls/mmdevapi/devenum.c
+@@ -441,7 +441,7 @@ static const WCHAR *find_product_name_override(const WCHAR *device_id)
+  * If GUID is null, a random guid will be assigned
+  * and the device will be created
+  */
+-static MMDevice *MMDevice_Create(const WCHAR *name, GUID *id, EDataFlow flow, DWORD state, BOOL setdefault)
++static MMDevice *MMDevice_Create(const WCHAR *name, GUID *id, EDataFlow flow, DWORD state, BOOL setdefault, BOOL init_props)
+ {
+     HKEY key, root;
+     MMDevice *device, *cur = NULL;
+@@ -494,7 +494,13 @@ static MMDevice *MMDevice_Create(const WCHAR *name, GUID *id, EDataFlow flow, DW
+     {
+         HKEY keyprop;
+         RegSetValueExW(key, L"DeviceState", 0, REG_DWORD, (const BYTE*)&state, sizeof(DWORD));
+-        if (!RegCreateKeyExW(key, L"Properties", 0, NULL, 0, KEY_WRITE|KEY_READ|KEY_WOW64_64KEY, NULL, &keyprop, NULL))
++        /* Only (re)generate the endpoint name properties from a raw driver-supplied
++         * name. When a device is reloaded from the registry its stored FriendlyName
++         * is already the final "Type (desc)" string; wrapping it again here would
++         * nest it one level deeper on every run ("Speakers (Speakers (...))"),
++         * growing without bound for devices that are no longer present until audio
++         * enumeration chokes. Preserve the stored properties in that case. */
++        if (init_props && !RegCreateKeyExW(key, L"Properties", 0, NULL, 0, KEY_WRITE|KEY_READ|KEY_WOW64_64KEY, NULL, &keyprop, NULL))
+         {
+             PROPVARIANT pv;
+             WCHAR *type;
+@@ -624,7 +630,7 @@ HRESULT load_devices_from_reg(void)
+             && pv.vt == VT_LPWSTR)
+         {
+             MMDevice_Create(pv.pwszVal, &guid, curflow,
+-                    DEVICE_STATE_NOTPRESENT, FALSE);
++                    DEVICE_STATE_NOTPRESENT, FALSE, FALSE);
+             CoTaskMemFree(pv.pwszVal);
+         }
+     } while (1);
+@@ -688,7 +694,7 @@ HRESULT load_driver_devices(EDataFlow flow)
+ 
+         get_device_guid( flow, dev_name, &guid );
+ 
+-        dev = MMDevice_Create(name, &guid, flow, DEVICE_STATE_ACTIVE, params.default_idx == i);
++        dev = MMDevice_Create(name, &guid, flow, DEVICE_STATE_ACTIVE, params.default_idx == i, TRUE);
+         set_format(dev);
+     }
+ 
 diff --git a/dlls/msvcp140/msvcp140.spec b/dlls/msvcp140/msvcp140.spec
-index cd6c89e22e7b3cb561e93960ab6f7c57a2454d60..4ea860554b9e8a774214178ae1769dfe337e623f 100644
+index cd6c89e22e..4ea860554b 100644
 --- a/dlls/msvcp140/msvcp140.spec
 +++ b/dlls/msvcp140/msvcp140.spec
 @@ -72,7 +72,7 @@
@@ -3179,7 +3249,7 @@ index cd6c89e22e7b3cb561e93960ab6f7c57a2454d60..4ea860554b9e8a774214178ae1769dfe
  @ stub -arch=i386 ??4?$basic_istream@GU?$char_traits@G@std@@@std@@IAEAAV01@$$QAV01@@Z
  @ stub -arch=win64 ??4?$basic_istream@GU?$char_traits@G@std@@@std@@IEAAAEAV01@$$QEAV01@@Z
 diff --git a/dlls/msvcp140/tests/msvcp140.c b/dlls/msvcp140/tests/msvcp140.c
-index bad48e4934e5069f59d18060511ddfb743861ef2..776cd491c8a7a57e9742148032c623cf2c171925 100644
+index bad48e4934..776cd491c8 100644
 --- a/dlls/msvcp140/tests/msvcp140.c
 +++ b/dlls/msvcp140/tests/msvcp140.c
 @@ -2482,6 +2482,58 @@ static void test_exception_pointer(void)
@@ -3249,7 +3319,7 @@ index bad48e4934e5069f59d18060511ddfb743861ef2..776cd491c8a7a57e9742148032c623cf
      FreeLibrary(msvcp);
  }
 diff --git a/dlls/msvcp90/ios.c b/dlls/msvcp90/ios.c
-index 71f8dc5315925abbdb67445a5eac72ed817c76b8..788ca5b01d82a611539868acfb0659df91685918 100644
+index 71f8dc5315..788ca5b01d 100644
 --- a/dlls/msvcp90/ios.c
 +++ b/dlls/msvcp90/ios.c
 @@ -9669,6 +9669,31 @@ void __thiscall basic_istream_char_swap(basic_istream_char *this, basic_istream_
@@ -3285,7 +3355,7 @@ index 71f8dc5315925abbdb67445a5eac72ed817c76b8..788ca5b01d82a611539868acfb0659df
  static inline basic_ios_wchar* basic_istream_wchar_get_basic_ios(basic_istream_wchar *this)
  {
 diff --git a/dlls/ntdll/unix/file.c b/dlls/ntdll/unix/file.c
-index b641e4ca3361bab7e476b6449c6af92fefabd95a..3f7af640efe6235b13664a0cf16f8fea0bec08d7 100644
+index b641e4ca33..3f7af640ef 100644
 --- a/dlls/ntdll/unix/file.c
 +++ b/dlls/ntdll/unix/file.c
 @@ -1662,6 +1662,16 @@ static int parse_samba_dos_attrib_data( char *data, int len )
@@ -3333,7 +3403,7 @@ index b641e4ca3361bab7e476b6449c6af92fefabd95a..3f7af640efe6235b13664a0cf16f8fea
          strcat( parent_path, "/.." );
          if (!stat( parent_path, &parent_st )
 diff --git a/dlls/ntdll/unix/server.c b/dlls/ntdll/unix/server.c
-index 730a0cd9a94251c79577186b488a491747f48cf8..ce358e0b2b3adbda00200780daa803957d37aaf1 100644
+index 730a0cd9a9..ce358e0b2b 100644
 --- a/dlls/ntdll/unix/server.c
 +++ b/dlls/ntdll/unix/server.c
 @@ -1604,6 +1604,8 @@ void process_exit_wrapper( int status )
@@ -3381,7 +3451,7 @@ index 730a0cd9a94251c79577186b488a491747f48cf8..ce358e0b2b3adbda00200780daa80395
          fatal_error( "'%s' is a 64-bit installation, it cannot be used with a 32-bit wineserver.\n",
                       config_dir );
 diff --git a/dlls/ntdll/unix/system.c b/dlls/ntdll/unix/system.c
-index 2d6e3184ac9a56993902d026b59accf16e9bdcd7..fa2d67c6cf94535a351ce689543801f1bd39c52f 100644
+index 2d6e3184ac..fa2d67c6cf 100644
 --- a/dlls/ntdll/unix/system.c
 +++ b/dlls/ntdll/unix/system.c
 @@ -58,6 +58,9 @@
@@ -4011,7 +4081,7 @@ index 2d6e3184ac9a56993902d026b59accf16e9bdcd7..fa2d67c6cf94535a351ce689543801f1
                  if(f && (fscanf(f, "%u", &val) == 1)) {
                      cpu_power[i].MhzLimit = val / 1000;
 diff --git a/dlls/ntdll/unix/thread.c b/dlls/ntdll/unix/thread.c
-index 546963a424155ce3d1d9566665ad665b929ab193..6abc8fcdf873746bae022936722a2f9f91b3959d 100644
+index 546963a424..6abc8fcdf8 100644
 --- a/dlls/ntdll/unix/thread.c
 +++ b/dlls/ntdll/unix/thread.c
 @@ -2716,7 +2716,18 @@ ULONG WINAPI NtGetCurrentProcessorNumber(void)
@@ -4035,7 +4105,7 @@ index 546963a424155ce3d1d9566665ad665b929ab193..6abc8fcdf873746bae022936722a2f9f
      if (__builtin_available( macOS 11.0, * ))
      {
 diff --git a/dlls/ntdll/unix/unix_private.h b/dlls/ntdll/unix/unix_private.h
-index c8ca97d21a0163099dcba8a0dc7a8b10b8aa31bc..b2f18496b8444a4bf4798c28b5e1ae070f402040 100644
+index c8ca97d21a..b2f18496b8 100644
 --- a/dlls/ntdll/unix/unix_private.h
 +++ b/dlls/ntdll/unix/unix_private.h
 @@ -388,8 +388,11 @@ extern NTSTATUS open_unix_file( HANDLE *handle, const char *unix_name, ACCESS_MA
@@ -4051,7 +4121,7 @@ index c8ca97d21a0163099dcba8a0dc7a8b10b8aa31bc..b2f18496b8444a4bf4798c28b5e1ae07
                                   IO_STATUS_BLOCK *io, NTSTATUS status, ULONG_PTR information );
  extern void set_async_direct_result( HANDLE *async_handle, unsigned int options, IO_STATUS_BLOCK *io,
 diff --git a/dlls/user32/clipboard.c b/dlls/user32/clipboard.c
-index 3c3ba7c584c9154d08c5cb128f5102186f765a00..18c8ace99dbd8c4985243d1fdc514185a941f8de 100644
+index 3c3ba7c584..18c8ace99d 100644
 --- a/dlls/user32/clipboard.c
 +++ b/dlls/user32/clipboard.c
 @@ -671,7 +671,9 @@ struct data_object
@@ -4458,7 +4528,7 @@ index 3c3ba7c584c9154d08c5cb128f5102186f765a00..18c8ace99dbd8c4985243d1fdc514185
      }
  }
 diff --git a/dlls/user32/tests/menu.c b/dlls/user32/tests/menu.c
-index 6862f13c6b16424b523eb1ed14b2360b0274defe..8640f299800fa224bc014c3dba1e9cfc738fa1a7 100644
+index 6862f13c6b..8640f29980 100644
 --- a/dlls/user32/tests/menu.c
 +++ b/dlls/user32/tests/menu.c
 @@ -209,6 +209,56 @@ static void register_menu_check_class(void)
@@ -4527,7 +4597,7 @@ index 6862f13c6b16424b523eb1ed14b2360b0274defe..8640f299800fa224bc014c3dba1e9cfc
      test_menu_iteminfo();
      test_menu_search_bycommand();
 diff --git a/dlls/win32u/clipboard.c b/dlls/win32u/clipboard.c
-index ec48cd0938186d27bef28091b38fb202c4bf1da9..e684cc020f79c6ba8600f75d7dc41ca2426d9bf0 100644
+index ec48cd0938..e684cc020f 100644
 --- a/dlls/win32u/clipboard.c
 +++ b/dlls/win32u/clipboard.c
 @@ -758,35 +758,49 @@ LRESULT drag_drop_call( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam, void
@@ -4629,8 +4699,32 @@ index ec48cd0938186d27bef28091b38fb202c4bf1da9..e684cc020f79c6ba8600f75d7dc41ca2
  
      default:
          FIXME( "Unknown NtUserDragDropCall msg %#x\n", msg );
+diff --git a/dlls/win32u/dce.c b/dlls/win32u/dce.c
+index 5e8d82aed3..ba845df5c0 100644
+--- a/dlls/win32u/dce.c
++++ b/dlls/win32u/dce.c
+@@ -201,11 +201,16 @@ static BOOL scaled_surface_flush( struct window_surface *window_surface, const R
+         HRGN hrgn = map_dpi_region( window_surface->shape_region, surface->dpi_from, surface->dpi_to );
+         window_surface_set_shape( surface->target_surface, hrgn );
+         if (hrgn) NtGdiDeleteObjectApp( hrgn );
+-
+-        window_surface_set_layered( surface->target_surface, window_surface->color_key,
+-                                    window_surface->alpha_bits, window_surface->alpha_mask );
+     }
+ 
++    /* Keep the target surface's layered attributes in sync on every flush, not only on
++     * shape changes: layered windows without a shape (e.g. JUCE popup-menu drop-shadow
++     * windows, per-pixel alpha via UpdateLayeredWindow) otherwise never propagate
++     * alpha_mask to the driver surface, which then composites them as opaque black.
++     * window_surface_set_layered only invalidates the target when a value changed. */
++    window_surface_set_layered( surface->target_surface, window_surface->color_key,
++                                window_surface->alpha_bits, window_surface->alpha_mask );
++
+     window_surface_flush( surface->target_surface );
+     return TRUE;
+ }
 diff --git a/dlls/win32u/menu.c b/dlls/win32u/menu.c
-index a700f44af78befb59cad46b20c3d6d175d344b3f..da788b4e2dcf72001d008470411edc42e7080928 100644
+index a700f44af7..da788b4e2d 100644
 --- a/dlls/win32u/menu.c
 +++ b/dlls/win32u/menu.c
 @@ -71,6 +71,8 @@ struct menu
@@ -4852,7 +4946,7 @@ index a700f44af78befb59cad46b20c3d6d175d344b3f..da788b4e2dcf72001d008470411edc42
  }
  
 diff --git a/dlls/win32u/message.c b/dlls/win32u/message.c
-index d432eb3c1af1e230d9f1684f38f27ac5b9b147d4..405ba57c481eb076f8859530a9a3065386f0e5fd 100644
+index d432eb3c1a..405ba57c48 100644
 --- a/dlls/win32u/message.c
 +++ b/dlls/win32u/message.c
 @@ -2236,12 +2236,12 @@ static LRESULT handle_internal_message( HWND hwnd, UINT msg, WPARAM wparam, LPAR
@@ -4892,11 +4986,95 @@ index d432eb3c1af1e230d9f1684f38f27ac5b9b147d4..405ba57c481eb076f8859530a9a30653
  
          return 0;
      }
+diff --git a/dlls/win32u/ntuser_private.h b/dlls/win32u/ntuser_private.h
+index 26bab84b2e..381e4262e8 100644
+--- a/dlls/win32u/ntuser_private.h
++++ b/dlls/win32u/ntuser_private.h
+@@ -132,6 +132,8 @@ struct user_thread_info
+     struct mouse_tracking_info   *mouse_tracking_info;    /* NtUserTrackMouseEvent handling */
+     struct opengl_thread_data    *opengl_data;            /* OpenGL private thread data */
+     struct list                   known_pointers;         /* list of known pointers */
++    HWND                          reentrant_wpchanged_hwnd;  /* window inside a nested WM_WINDOWPOSCHANGED send */
++    UINT                          reentrant_wpchanged_depth; /* nesting depth of WM_WINDOWPOSCHANGED sends */
+ };
+ 
+ extern struct user_thread_info *get_user_thread_info(void);
+diff --git a/dlls/win32u/opengl.c b/dlls/win32u/opengl.c
+index 02f85c4fe3..72a9fdf704 100644
+--- a/dlls/win32u/opengl.c
++++ b/dlls/win32u/opengl.c
+@@ -690,8 +690,16 @@ static BOOL describe_egl_config( EGLConfig config, struct wgl_pixel_format *fmt,
+     fmt->bind_to_texture_rectangle_rgb = GL_TRUE;
+     fmt->bind_to_texture_rectangle_rgba = GL_TRUE;
+ 
+-    /* TODO: Support SRGB surfaces and enable the attribute */
+-    fmt->framebuffer_srgb_capable = GL_FALSE;
++    /* sRGB encoding on window surfaces works when the EGL display supports
++     * EGL_KHR_gl_colorspace (surfaces are then created with the sRGB
++     * colorspace; GL only actually encodes while GL_FRAMEBUFFER_SRGB is
++     * enabled, so this is inert for apps that don't use it). Not advertising
++     * it makes wglChoosePixelFormatARB return NO formats for apps that
++     * require WGL_FRAMEBUFFER_SRGB_CAPABLE (e.g. Rust baseview plugin GUIs,
++     * which then crash their host). Restrict to 8-bit RGB formats where the
++     * sRGB colorspace is universally supported. */
++    fmt->framebuffer_srgb_capable = egl->has_EGL_KHR_gl_colorspace &&
++                                    pfd->cRedBits == 8 && pfd->cGreenBits == 8 && pfd->cBlueBits == 8;
+ 
+     fmt->float_components = GL_FALSE;
+ 
+@@ -1014,6 +1022,7 @@ static BOOL init_egl_platform( struct egl_platform *egl, const struct opengl_fun
+ 
+     egl->has_EGL_EXT_present_opaque = has_extension( extensions, "EGL_EXT_present_opaque" );
+     egl->has_EGL_EXT_pixel_format_float = has_extension( extensions, "EGL_EXT_pixel_format_float" );
++    egl->has_EGL_KHR_gl_colorspace = has_extension( extensions, "EGL_KHR_gl_colorspace" );
+     return TRUE;
+ }
+ 
 diff --git a/dlls/win32u/window.c b/dlls/win32u/window.c
-index 924990e8d4ff4a955ed8a7403b278a06e8b8df4a..2e7514addf096cc2e5e2b872164f7c150cfb4c2e 100644
+index 924990e8d4..a472604202 100644
 --- a/dlls/win32u/window.c
 +++ b/dlls/win32u/window.c
-@@ -5628,14 +5628,35 @@ void destroy_thread_windows(void)
+@@ -4136,6 +4136,20 @@ BOOL set_window_pos( WINDOWPOS *winpos, int parent_x, int parent_y )
+     if (((winpos->flags & SWP_AGG_STATUSFLAGS) != SWP_AGG_NOPOSCHANGE)
+             && !((orig_flags & SWP_AGG_NOCLIENTCHANGE) && (orig_flags & SWP_SHOWWINDOW)))
+     {
++        /* Suppress a nested, size-only WM_WINDOWPOSCHANGED re-entering the same
++         * top-level window: Ableton Live's autosize handler re-drives SetWindowPos
++         * from inside its own WM_WINDOWPOSCHANGED, spinning forever at high DPI.
++         * Ported from shibco/ableton-linux NSPA patches 0003+0004 (per-thread state). */
++        static const UINT reentrant_resize_flags =
++            SWP_NOMOVE | SWP_NOZORDER | SWP_NOACTIVATE | SWP_NOOWNERZORDER;
++        DWORD wpch_style = get_window_long( winpos->hwnd, GWL_STYLE );
++        struct user_thread_info *thread_info = get_user_thread_info();
++        BOOL suppress_reentrant_wpch =
++            !(wpch_style & WS_CHILD) &&
++            thread_info->reentrant_wpchanged_depth &&
++            thread_info->reentrant_wpchanged_hwnd == winpos->hwnd &&
++            (orig_flags & reentrant_resize_flags) == reentrant_resize_flags &&
++            !(orig_flags & (SWP_NOSIZE | SWP_SHOWWINDOW | SWP_HIDEWINDOW));
+         /* WM_WINDOWPOSCHANGED is sent even if SWP_NOSENDCHANGING is set
+            and always contains final window position.
+          */
+@@ -4143,7 +4157,17 @@ BOOL set_window_pos( WINDOWPOS *winpos, int parent_x, int parent_y )
+         winpos->y  = new_rects.window.top;
+         winpos->cx = new_rects.window.right - new_rects.window.left;
+         winpos->cy = new_rects.window.bottom - new_rects.window.top;
+-        send_message( winpos->hwnd, WM_WINDOWPOSCHANGED, 0, (LPARAM)winpos );
++        if (!suppress_reentrant_wpch)
++        {
++            HWND prev_hwnd = thread_info->reentrant_wpchanged_hwnd;
++            UINT prev_depth = thread_info->reentrant_wpchanged_depth;
++
++            thread_info->reentrant_wpchanged_hwnd = winpos->hwnd;
++            thread_info->reentrant_wpchanged_depth = prev_depth + 1;
++            send_message( winpos->hwnd, WM_WINDOWPOSCHANGED, 0, (LPARAM)winpos );
++            thread_info->reentrant_wpchanged_hwnd = prev_hwnd;
++            thread_info->reentrant_wpchanged_depth = prev_depth;
++        }
+     }
+ 
+     if ((winpos->flags & (SWP_NOSIZE|SWP_NOMOVE|SWP_FRAMECHANGED)) != (SWP_NOSIZE|SWP_NOMOVE))
+@@ -5628,14 +5652,35 @@ void destroy_thread_windows(void)
   *
   * Create a window handle with the server.
   */
@@ -4932,7 +5110,7 @@ index 924990e8d4ff4a955ed8a7403b278a06e8b8df4a..2e7514addf096cc2e5e2b872164f7c15
      SERVER_START_REQ( create_window )
      {
          req->parent          = wine_server_user_handle( parent );
-@@ -5860,6 +5881,9 @@ HWND WINAPI NtUserCreateWindowEx( DWORD ex_style, UNICODE_STRING *class_name,
+@@ -5860,6 +5905,9 @@ HWND WINAPI NtUserCreateWindowEx( DWORD ex_style, UNICODE_STRING *class_name,
  
      fix_cs_coordinates( &cs, &sw );
      cs.dwExStyle = fix_exstyle( cs.style, cs.dwExStyle );
@@ -4942,8 +5120,183 @@ index 924990e8d4ff4a955ed8a7403b278a06e8b8df4a..2e7514addf096cc2e5e2b872164f7c15
  
      /* Create the window structure */
  
+diff --git a/dlls/win32u/winstation.c b/dlls/win32u/winstation.c
+index 3da9acdd3a..a372b6bda6 100644
+--- a/dlls/win32u/winstation.c
++++ b/dlls/win32u/winstation.c
+@@ -120,21 +120,38 @@ static NTSTATUS map_shared_session_block( SIZE_T offset, SIZE_T size, struct ses
+ 
+     if (!(block = calloc( 1, sizeof(*block) ))) return STATUS_NO_MEMORY;
+ 
++    /* Map the view with write access so ntdll uses MAP_SHARED: read-only views
++     * are mapped MAP_PRIVATE on Linux, and private views of the session memfd
++     * can end up permanently stale (they stop observing wineserver's writes),
++     * which makes session objects read as zeroes: window class registration and
++     * window creation then fail at random ("plug window creation failed",
++     * popup menus dying in WM_NCCREATE). We never write through the view. */
+     InitializeObjectAttributes( &attr, &name, 0, NULL, NULL );
+-    if ((status = NtOpenSection( &handle, SECTION_MAP_READ, &attr )))
+-        WARN( "Failed to open shared session section, status %#x\n", status );
+-    else
++    if (!(status = NtOpenSection( &handle, SECTION_MAP_READ | SECTION_MAP_WRITE, &attr )))
+     {
+         if ((status = NtMapViewOfSection( handle, GetCurrentProcess(), (void **)&block->data, 0, 0,
+-                                          &off, &block->size, ViewUnmap, 0, PAGE_READONLY )))
+-            WARN( "Failed to map shared session block, status %#x\n", status );
++                                          &off, &block->size, ViewUnmap, 0, PAGE_READWRITE )))
++            WARN( "Failed to map shared session block read-write, status %#x\n", status );
++        NtClose( handle );
++    }
++    if (status)
++    {
++        InitializeObjectAttributes( &attr, &name, 0, NULL, NULL );
++        if ((status = NtOpenSection( &handle, SECTION_MAP_READ, &attr )))
++            WARN( "Failed to open shared session section, status %#x\n", status );
+         else
+         {
+-            list_add_tail( &session_blocks, &block->entry );
+-            block->offset = off.QuadPart;
+-            assert( block->offset + block->size > block->offset );
++            if ((status = NtMapViewOfSection( handle, GetCurrentProcess(), (void **)&block->data, 0, 0,
++                                              &off, &block->size, ViewUnmap, 0, PAGE_READONLY )))
++                WARN( "Failed to map shared session block, status %#x\n", status );
++            NtClose( handle );
+         }
+-        NtClose( handle );
++    }
++    if (!status)
++    {
++        list_add_tail( &session_blocks, &block->entry );
++        block->offset = off.QuadPart;
++        assert( block->offset + block->size > block->offset );
+     }
+ 
+     if (status) free( block );
+@@ -153,7 +170,7 @@ static NTSTATUS find_shared_session_block( SIZE_T offset, SIZE_T size, struct se
+ 
+     LIST_FOR_EACH_ENTRY( block, &session_blocks, struct session_block, entry )
+     {
+-        if (block->offset < offset && offset + size <= block->offset + block->size)
++        if (block->offset <= offset && offset + size <= block->offset + block->size)
+         {
+             *ret = block;
+             pthread_mutex_unlock( &session_lock );
+@@ -180,9 +197,12 @@ const shared_object_t *find_shared_session_object( object_id_t id, mem_size_t of
+ 
+     if (id && !(status = find_shared_session_block( offset, sizeof(*object), &block )))
+     {
++        object_id_t read_id;
+         object = (const shared_object_t *)(block->data + offset - block->offset);
+-        if (id == shared_object_get_id( object )) return object;
+-        WARN( "Session object id doesn't match expected id %s\n", wine_dbgstr_longlong(id) );
++        if (id == (read_id = shared_object_get_id( object ))) return object;
++        WARN( "Session object id %s at offset %s doesn't match expected id %s (block data %p offset %s size %s)\n",
++              wine_dbgstr_longlong(read_id), wine_dbgstr_longlong(offset), wine_dbgstr_longlong(id),
++              block->data, wine_dbgstr_longlong(block->offset), wine_dbgstr_longlong(block->size) );
+     }
+ 
+     return NULL;
+diff --git a/dlls/wined3d/swapchain.c b/dlls/wined3d/swapchain.c
+index 06451c93d6..b47908c832 100644
+--- a/dlls/wined3d/swapchain.c
++++ b/dlls/wined3d/swapchain.c
+@@ -247,10 +247,48 @@ HRESULT CDECL wined3d_swapchain_present(struct wined3d_swapchain *swapchain,
+         if (!desc->windowed)
+             SetRect(&d, 0, 0, desc->backbuffer_width, desc->backbuffer_height);
+         else
++        {
++            /* DXGI/D3D presents address the window's physical pixels: the
++             * surface the blit lands in is at the window's own DPI, never the
++             * calling thread's. Querying the client rect in the caller's DPI
++             * context shrinks/grows the destination when the thread and window
++             * contexts disagree (JUCE editors flip thread contexts per call —
++             * a DPI-unaware Present into a per-monitor window halved the rect
++             * and squeezed the frame into the top-left quarter). */
++            DPI_AWARENESS_CONTEXT prev = SetThreadDpiAwarenessContext(
++                    GetWindowDpiAwarenessContext(swapchain->win_handle));
+             GetClientRect(swapchain->win_handle, &d);
++            SetThreadDpiAwarenessContext(prev);
++        }
+         dst_rect = &d;
+     }
+ 
++    /* DPI-ghost diagnosis: log the caller's DPI context, the resolved dst
++     * rect and the backbuffer size; rate-limited to the first few presents
++     * plus any change (a flip-flopping thread context / dst size is the
++     * Pianoteq half-size ghost signature). */
++    {
++        static LONG dbg_count;
++        static LONG last_w, last_h, last_ctx, last_bb_w, last_bb_h;
++        LONG w = dst_rect->right - dst_rect->left, h = dst_rect->bottom - dst_rect->top;
++        LONG ctx = (LONG)(LONG_PTR)GetThreadDpiAwarenessContext();
++        LONG n = InterlockedIncrement(&dbg_count);
++
++        if (n <= 5 || w != last_w || h != last_h || ctx != last_ctx
++                || (LONG)desc->backbuffer_width != last_bb_w
++                || (LONG)desc->backbuffer_height != last_bb_h)
++        {
++            static LONG dbg_changes;
++            LONG c = InterlockedIncrement(&dbg_changes);
++            if (c <= 500 || !(c % 100))
++                TRACE("PRESENT-DBG #%ld: swapchain %p win %p thread_ctx %#lx dst %s buffer %ux%u.\n",
++                        n, swapchain, swapchain->win_handle, ctx, wine_dbgstr_rect(dst_rect),
++                        desc->backbuffer_width, desc->backbuffer_height);
++        }
++        last_w = w; last_h = h; last_ctx = ctx;
++        last_bb_w = desc->backbuffer_width; last_bb_h = desc->backbuffer_height;
++    }
++
+     wined3d_cs_emit_present(swapchain->device->cs, swapchain, src_rect,
+             dst_rect, dst_window_override, swap_interval, flags);
+ 
+@@ -1485,7 +1523,12 @@ static HRESULT wined3d_swapchain_state_init(struct wined3d_swapchain_state *stat
+     {
+         RECT client_rect;
+ 
++        /* As in wined3d_swapchain_resize_buffers: auto-sized buffers follow
++         * the window's physical client size, not the caller's DPI view. */
++        DPI_AWARENESS_CONTEXT prev = SetThreadDpiAwarenessContext(
++                GetWindowDpiAwarenessContext(window));
+         GetClientRect(window, &client_rect);
++        SetThreadDpiAwarenessContext(prev);
+         TRACE("Client rect %s.\n", wine_dbgstr_rect(&client_rect));
+ 
+         if (!state->desc.backbuffer_width)
+@@ -2053,9 +2096,14 @@ HRESULT CDECL wined3d_swapchain_resize_buffers(struct wined3d_swapchain *swapcha
+ 
+         /* The application is requesting that either the swapchain width or
+          * height be set to the corresponding dimension in the window's
+-         * client rect. */
+-
+-        if (!GetClientRect(swapchain->state.device_window, &client_rect))
++         * client rect. Buffers are sized in the window's physical pixels —
++         * query the rect in the window's DPI context, not the caller's. */
++        DPI_AWARENESS_CONTEXT prev = SetThreadDpiAwarenessContext(
++                GetWindowDpiAwarenessContext(swapchain->state.device_window));
++        BOOL ret = GetClientRect(swapchain->state.device_window, &client_rect);
++        SetThreadDpiAwarenessContext(prev);
++
++        if (!ret)
+         {
+             ERR("Failed to get client rect, last error %#lx.\n", GetLastError());
+             return WINED3DERR_INVALIDCALL;
+@@ -2068,6 +2116,14 @@ HRESULT CDECL wined3d_swapchain_resize_buffers(struct wined3d_swapchain *swapcha
+             height = client_rect.bottom;
+     }
+ 
++    /* DPI-ghost diagnosis: JUCE computes explicit resize dimensions from its
++     * own (possibly DPI-virtualized) view of the window — log what it asked
++     * for together with its thread context. */
++    TRACE("RESIZE-DBG: swapchain %p win %p thread_ctx %#lx %ux%u -> %ux%u.\n",
++            swapchain, swapchain->state.device_window,
++            (LONG)(LONG_PTR)GetThreadDpiAwarenessContext(),
++            desc->backbuffer_width, desc->backbuffer_height, width, height);
++
+     if (width != desc->backbuffer_width || height != desc->backbuffer_height)
+     {
+         desc->backbuffer_width = width;
 diff --git a/dlls/winex11.drv/event.c b/dlls/winex11.drv/event.c
-index 38ad7f89d66a38ef7364106fa5ddaefe3277d4cd..831cfdd73bab9f7f98bbdd66a7620036f2f2fa99 100644
+index 38ad7f89d6..831cfdd73b 100644
 --- a/dlls/winex11.drv/event.c
 +++ b/dlls/winex11.drv/event.c
 @@ -1535,6 +1535,9 @@ static void handle_xdnd_position_event( HWND hwnd, XClientMessageEvent *event )
@@ -4956,8 +5309,76 @@ index 38ad7f89d66a38ef7364106fa5ddaefe3277d4cd..831cfdd73bab9f7f98bbdd66a7620036
  }
  
  
+diff --git a/dlls/winex11.drv/init.c b/dlls/winex11.drv/init.c
+index 754349f689..f206b05e4a 100644
+--- a/dlls/winex11.drv/init.c
++++ b/dlls/winex11.drv/init.c
+@@ -237,6 +237,30 @@ void set_dc_drawable( HDC hdc, Drawable drawable, const RECT *rect, int mode )
+         .dc_rect = *rect,
+         .mode = mode,
+     };
++    XWindowAttributes attr;
++
++    /* Report the drawable's visual so xrenderdrv_ExtEscape can pick an XRender
++     * pict format matching the drawable's depth. Without it, the DC keeps its
++     * previous format (a display DC opened via NtGdiOpenDCW starts on the depth-24
++     * root format); when the new drawable has a different depth - e.g. a depth-32
++     * layered top-level window that hosts an OpenGL plugin editor (Chow Tape Model)
++     * being presented via X11DRV_client_surface_present - XRenderCreatePicture then
++     * fails with BadMatch, a fatal X error that takes the whole host down.
++     * XGetWindowAttributes fails for non-window drawables such as GLX pbuffers;
++     * leave the visual zeroed ("keep current format") in that case. */
++    if (XGetWindowAttributes( gdi_display, drawable, &attr ) && attr.class != InputOnly)
++    {
++        escape.visual.visual        = attr.visual;
++        escape.visual.visualid      = XVisualIDFromVisual( attr.visual );
++        escape.visual.screen        = XScreenNumberOfScreen( attr.screen );
++        escape.visual.depth         = attr.depth;
++        escape.visual.class         = attr.visual->class;
++        escape.visual.red_mask      = attr.visual->red_mask;
++        escape.visual.green_mask    = attr.visual->green_mask;
++        escape.visual.blue_mask     = attr.visual->blue_mask;
++        escape.visual.colormap_size = attr.visual->map_entries;
++        escape.visual.bits_per_rgb  = attr.visual->bits_per_rgb;
++    }
+     NtGdiExtEscape( hdc, NULL, 0, X11DRV_ESCAPE, sizeof(escape), (LPSTR)&escape, 0, NULL );
+ }
+ 
+diff --git a/dlls/winex11.drv/opengl.c b/dlls/winex11.drv/opengl.c
+index 9771b4d33f..90e5a06352 100644
+--- a/dlls/winex11.drv/opengl.c
++++ b/dlls/winex11.drv/opengl.c
+@@ -529,8 +529,26 @@ static BOOL x11drv_egl_surface_create( struct client_surface *client, int format
+     opengl_drawable_map_buffer( &gl->base, GL_FRONT_AND_BACK, GL_BACK );
+     if (gl->base.stereo) opengl_drawable_map_buffer( &gl->base, GL_FRONT_RIGHT, GL_BACK_RIGHT );
+ 
+-    if (!(gl->base.surface = funcs->p_eglCreateWindowSurface( egl->display, egl_config_for_format( format ),
+-                                                              (void *)surface->window, NULL )))
++    /* Create the surface with the sRGB colorspace when available: GL only
++     * encodes while GL_FRAMEBUFFER_SRGB is enabled, so this is inert for
++     * apps that don't use it, but it makes the WGL_FRAMEBUFFER_SRGB_CAPABLE
++     * attribute we advertise actually work. Fall back to the default
++     * colorspace if the driver rejects the combination for this config. */
++    {
++#ifndef EGL_GL_COLORSPACE_KHR
++#define EGL_GL_COLORSPACE_KHR 0x309D
++#define EGL_GL_COLORSPACE_SRGB_KHR 0x3089
++#endif
++        const EGLint srgb_attribs[] = { EGL_GL_COLORSPACE_KHR, EGL_GL_COLORSPACE_SRGB_KHR, EGL_NONE };
++        gl->base.surface = NULL;
++        if (egl->has_EGL_KHR_gl_colorspace)
++            gl->base.surface = funcs->p_eglCreateWindowSurface( egl->display, egl_config_for_format( format ),
++                                                                (void *)surface->window, srgb_attribs );
++        if (!gl->base.surface)
++            gl->base.surface = funcs->p_eglCreateWindowSurface( egl->display, egl_config_for_format( format ),
++                                                                (void *)surface->window, NULL );
++    }
++    if (!gl->base.surface)
+     {
+         opengl_drawable_release( &gl->base );
+         return FALSE;
 diff --git a/dlls/winex11.drv/window.c b/dlls/winex11.drv/window.c
-index 297695749a165d6932486fba6c187d00e80121cb..e14c9766f74e9a25e92e0201f16b41630f797038 100644
+index 297695749a..96e3d4470c 100644
 --- a/dlls/winex11.drv/window.c
 +++ b/dlls/winex11.drv/window.c
 @@ -500,6 +500,43 @@ static unsigned long get_mwm_decorations_for_style( DWORD style, DWORD ex_style
@@ -5004,16 +5425,20 @@ index 297695749a165d6932486fba6c187d00e80121cb..e14c9766f74e9a25e92e0201f16b4163
  
  /***********************************************************************
   *              get_mwm_decorations
-@@ -507,7 +544,7 @@ static unsigned long get_mwm_decorations_for_style( DWORD style, DWORD ex_style
+@@ -507,7 +544,11 @@ static unsigned long get_mwm_decorations_for_style( DWORD style, DWORD ex_style
  static unsigned long get_mwm_decorations( struct x11drv_win_data *data, DWORD style, DWORD ex_style )
  {
      if (EqualRect( &data->rects.window, &data->rects.visible )) return 0;
 -    return get_mwm_decorations_for_style( style, ex_style );
++    /* Custom-NC windows (client == window, e.g. Ableton Live's main window) render their
++     * own chrome; a reparenting WM would paint a second frame around it -- visible at high
++     * DPI, where window != visible stops gating this. From shibco/ableton-linux NSPA 0004. */
++    if (EqualRect( &data->rects.window, &data->rects.client )) return 0;
 +    return get_mwm_decorations_for_window( data->hwnd, style, ex_style );
  }
  
  
-@@ -915,6 +952,30 @@ static void window_set_wm_normal_hints( struct x11drv_win_data *data, XSizeHints
+@@ -915,6 +956,30 @@ static void window_set_wm_normal_hints( struct x11drv_win_data *data, XSizeHints
   *
   * set the window size hints
   */
@@ -5044,7 +5469,7 @@ index 297695749a165d6932486fba6c187d00e80121cb..e14c9766f74e9a25e92e0201f16b4163
  static void set_size_hints( struct x11drv_win_data *data, DWORD style )
  {
      XSizeHints *size_hints;
-@@ -936,7 +997,9 @@ static void set_size_hints( struct x11drv_win_data *data, DWORD style )
+@@ -936,7 +1001,9 @@ static void set_size_hints( struct x11drv_win_data *data, DWORD style )
          }
          else size_hints->win_gravity = NorthWestGravity;
  
@@ -5055,7 +5480,7 @@ index 297695749a165d6932486fba6c187d00e80121cb..e14c9766f74e9a25e92e0201f16b4163
          {
              size_hints->max_width = data->rects.visible.right - data->rects.visible.left;
              size_hints->max_height = data->rects.visible.bottom - data->rects.visible.top;
-@@ -1399,6 +1462,46 @@ static void window_set_net_wm_state( struct x11drv_win_data *data, UINT new_stat
+@@ -1399,6 +1466,46 @@ static void window_set_net_wm_state( struct x11drv_win_data *data, UINT new_stat
      }
  }
  
@@ -5102,7 +5527,7 @@ index 297695749a165d6932486fba6c187d00e80121cb..e14c9766f74e9a25e92e0201f16b4163
  static void window_set_config( struct x11drv_win_data *data, RECT rect, BOOL above )
  {
      UINT style = NtUserGetWindowLongW( data->hwnd, GWL_STYLE ), mask = 0;
-@@ -1467,6 +1570,8 @@ static void window_set_config( struct x11drv_win_data *data, RECT rect, BOOL abo
+@@ -1467,6 +1574,8 @@ static void window_set_config( struct x11drv_win_data *data, RECT rect, BOOL abo
      data->pending_state.rect = *new_rect;
      data->pending_state.above = above;
      data->configure_serial = NextRequest( data->display );
@@ -5111,7 +5536,7 @@ index 297695749a165d6932486fba6c187d00e80121cb..e14c9766f74e9a25e92e0201f16b4163
      TRACE( "window %p/%lx, requesting config %s mask %#x above %u, serial %lu\n", data->hwnd, data->whole_window,
             wine_dbgstr_rect(new_rect), mask, above, data->configure_serial );
      XReconfigureWMWindow( data->display, data->whole_window, data->vis.screen, mask, &changes );
-@@ -1737,6 +1842,136 @@ static UINT window_update_client_state( struct x11drv_win_data *data )
+@@ -1737,6 +1846,136 @@ static UINT window_update_client_state( struct x11drv_win_data *data )
      return 0;
  }
  
@@ -5248,7 +5673,7 @@ index 297695749a165d6932486fba6c187d00e80121cb..e14c9766f74e9a25e92e0201f16b4163
  static UINT window_update_client_config( struct x11drv_win_data *data )
  {
      static const UINT fullscreen_mask = (1 << NET_WM_STATE_MAXIMIZED) | (1 << NET_WM_STATE_FULLSCREEN);
-@@ -1754,6 +1989,29 @@ static UINT window_update_client_config( struct x11drv_win_data *data )
+@@ -1754,6 +1993,29 @@ static UINT window_update_client_config( struct x11drv_win_data *data )
      if (data->mwm_hints_serial) return 0; /* another MWM_HINT update is pending, wait for it to complete */
      if (data->configure_serial) return 0; /* another config update is pending, wait for it to complete */
  
@@ -5278,7 +5703,7 @@ index 297695749a165d6932486fba6c187d00e80121cb..e14c9766f74e9a25e92e0201f16b4163
      /* Ignore fullscreen config changes when it's still on the same monitor. This is needed because
       * adding __NET_WM_STATE_FULLSCREEN will make WMs move the window to cover exactly the monitor
       * rect. If the application sets a visible rect slightly larger than the monitor rect and insists
-@@ -1812,7 +2070,10 @@ BOOL X11DRV_GetWindowStateUpdates( HWND hwnd, UINT *state_cmd, UINT *swp_flags,
+@@ -1812,7 +2074,10 @@ BOOL X11DRV_GetWindowStateUpdates( HWND hwnd, UINT *state_cmd, UINT *swp_flags,
      {
          *state_cmd = window_update_client_state( data );
          *swp_flags = window_update_client_config( data );
@@ -5290,7 +5715,7 @@ index 297695749a165d6932486fba6c187d00e80121cb..e14c9766f74e9a25e92e0201f16b4163
          release_win_data( data );
      }
  
-@@ -1952,12 +2213,50 @@ void window_configure_notify( struct x11drv_win_data *data, unsigned long serial
+@@ -1952,12 +2217,50 @@ void window_configure_notify( struct x11drv_win_data *data, unsigned long serial
  {
      RECT *desired = &data->desired_state.rect, *pending = &data->pending_state.rect, *current = &data->current_state.rect;
      unsigned long *expect_serial = &data->configure_serial;
@@ -5341,7 +5766,7 @@ index 297695749a165d6932486fba6c187d00e80121cb..e14c9766f74e9a25e92e0201f16b4163
      /* if we've delayed some config we want to continue with it, make sure handle_state_change doesn't overwrite it */
      if ((*expect_serial || window_needs_config_change_delay( data )) &&
          serial >= *expect_serial && !EqualRect( desired, pending ))
-@@ -1969,10 +2268,38 @@ void window_configure_notify( struct x11drv_win_data *data, unsigned long serial
+@@ -1969,10 +2272,38 @@ void window_configure_notify( struct x11drv_win_data *data, unsigned long serial
      if (!handle_state_change( serial, expect_serial, sizeof(*value), value, desired, pending,
                                current, expected, prefix, received, NULL ))
          return;
@@ -5380,7 +5805,57 @@ index 297695749a165d6932486fba6c187d00e80121cb..e14c9766f74e9a25e92e0201f16b4163
  }
  
  void net_active_window_notify( unsigned long serial, Window value, Time time )
-@@ -2157,6 +2484,18 @@ static void sync_window_position( struct x11drv_win_data *data, UINT swp_flags,
+@@ -2041,10 +2372,23 @@ void set_net_active_window( HWND hwnd, HWND previous )
+     BOOL withdrawn = FALSE;
+     Window window;
+     XEvent xev;
++    Time time = CurrentTime;
+ 
+     if (!is_net_supported( x11drv_atom(_NET_ACTIVE_WINDOW) )) return;
+     if (!(window = X11DRV_get_whole_window( hwnd ))) return;
+-    if (data->pending_state.net_active_window == window) return;
++
++    /* Use the timestamp of the last user input we processed: mutter's focus-stealing
++     * prevention silently drops activation requests with timestamp 0 (GNOME 50), which
++     * previously deadlocked the request state machine below for the whole session. */
++    if (EVENT_x11_time_to_win32_time( 0 ))
++        time = NtUserGetThreadState( UserThreadStateMessageTime ) - EVENT_x11_time_to_win32_time( 0 );
++
++    /* Skip only exact repeats: if the WM ignored a previous request for this window
++     * (e.g. it carried an older timestamp than the WM's focus-stealing cutoff), a new
++     * user interaction yields a fresh timestamp and must be allowed to retry, else the
++     * window can never be activated again for the rest of the session. */
++    if (data->current_state.net_active_window == window && !data->net_active_window_serial) return;
++    if (data->pending_state.net_active_window == window && time == data->net_active_window_time) return;
+     if (window_set_pending_activate( hwnd, &withdrawn )) return;
+ 
+     xev.xclient.type = ClientMessage;
+@@ -2055,12 +2399,13 @@ void set_net_active_window( HWND hwnd, HWND previous )
+     xev.xclient.send_event = True;
+     xev.xclient.format = 32;
+     xev.xclient.data.l[0] = 2; /* source: pager */
+-    xev.xclient.data.l[1] = 0; /* timestamp */
++    xev.xclient.data.l[1] = time;
+     xev.xclient.data.l[2] = X11DRV_get_whole_window( previous ); /* current active */
+     xev.xclient.data.l[3] = 0;
+     xev.xclient.data.l[4] = 0;
+ 
+     data->net_active_window_serial = NextRequest( data->display );
++    data->net_active_window_time = time;
+ 
+     if (withdrawn)
+     {
+@@ -2071,7 +2416,8 @@ void set_net_active_window( HWND hwnd, HWND previous )
+     }
+     data->pending_state.net_active_window = window;
+ 
+-    TRACE( "requesting _NET_ACTIVE_WINDOW %p/%lx serial %lu\n", hwnd, window, data->net_active_window_serial );
++    TRACE( "requesting _NET_ACTIVE_WINDOW %p/%lx serial %lu time %lu\n", hwnd, window,
++           data->net_active_window_serial, data->net_active_window_time );
+     XSendEvent( data->display, DefaultRootWindow( data->display ), False,
+                 SubstructureRedirectMask | SubstructureNotifyMask, &xev );
+ }
+@@ -2157,6 +2503,18 @@ static void sync_window_position( struct x11drv_win_data *data, UINT swp_flags,
      if (data->is_offscreen) OffsetRect( &new_rect, window_rect.left - old_rects->window.left,
                                          window_rect.top - old_rects->window.top );
  
@@ -5399,7 +5874,7 @@ index 297695749a165d6932486fba6c187d00e80121cb..e14c9766f74e9a25e92e0201f16b4163
      window_set_config( data, new_rect, above );
  }
  
-@@ -2497,6 +2836,8 @@ static void destroy_whole_window( struct x11drv_win_data *data, BOOL already_des
+@@ -2497,6 +2855,8 @@ static void destroy_whole_window( struct x11drv_win_data *data, BOOL already_des
          }
      }
      if (data->whole_colormap) XFreeColormap( data->display, data->whole_colormap );
@@ -5408,7 +5883,23 @@ index 297695749a165d6932486fba6c187d00e80121cb..e14c9766f74e9a25e92e0201f16b4163
      data->whole_window = data->client_window = 0;
      data->whole_colormap = 0;
      data->managed = FALSE;
-@@ -3194,6 +3535,18 @@ void X11DRV_MoveWindowBits( HWND hwnd, const struct window_rects *old_rects,
+@@ -3066,6 +3426,15 @@ void X11DRV_ReleaseDC( HWND hwnd, HDC hdc )
+     escape.mode = IncludeInferiors;
+     escape.dc_rect = NtUserGetVirtualScreenRect( MDT_DEFAULT );
+     OffsetRect( &escape.dc_rect, -2 * escape.dc_rect.left, -2 * escape.dc_rect.top );
++    /* The DC is parked on the root window, which uses the default visual. Set it
++     * explicitly: escape.visual is otherwise left uninitialized (stack garbage),
++     * and xrenderdrv_ExtEscape treats a non-NULL visual->visual as a real visual
++     * to match. When the garbage matches no XRender format it keeps the physdev's
++     * previous (possibly 32-bit) format instead of resetting to the root's depth-24
++     * format, and the next XRenderCreatePicture on the root drawable fails with
++     * BadMatch (fatal X error). Seen taking down the host when a JUCE/OpenGL plugin
++     * editor (e.g. Chow Tape Model) was opened at high DPI. */
++    escape.visual = default_visual;
+     NtGdiExtEscape( hdc, NULL, 0, X11DRV_ESCAPE, sizeof(escape), (LPSTR)&escape, 0, NULL );
+ }
+ 
+@@ -3194,6 +3563,18 @@ void X11DRV_MoveWindowBits( HWND hwnd, const struct window_rects *old_rects,
      struct x11drv_win_data *data;
      Window window;
  
@@ -5427,7 +5918,7 @@ index 297695749a165d6932486fba6c187d00e80121cb..e14c9766f74e9a25e92e0201f16b4163
      if (!(data = get_win_data( hwnd ))) return;
      window = data->whole_window;
      release_win_data( data );
-@@ -3216,7 +3569,7 @@ void X11DRV_MoveWindowBits( HWND hwnd, const struct window_rects *old_rects,
+@@ -3216,7 +3597,7 @@ void X11DRV_MoveWindowBits( HWND hwnd, const struct window_rects *old_rects,
   */
  BOOL X11DRV_GetWindowStyleMasks( HWND hwnd, UINT style, UINT ex_style, UINT *style_mask, UINT *ex_style_mask )
  {
@@ -5436,7 +5927,7 @@ index 297695749a165d6932486fba6c187d00e80121cb..e14c9766f74e9a25e92e0201f16b4163
      struct x11drv_win_data *data;
  
      if ((data = get_win_data( hwnd )))
-@@ -3266,7 +3619,22 @@ void X11DRV_WindowPosChanged( HWND hwnd, HWND insert_after, HWND owner_hint, UIN
+@@ -3266,7 +3647,22 @@ void X11DRV_WindowPosChanged( HWND hwnd, HWND insert_after, HWND owner_hint, UIN
  
      old_rects = data->rects;
      was_fullscreen = data->is_fullscreen;
@@ -5461,10 +5952,18 @@ index 297695749a165d6932486fba6c187d00e80121cb..e14c9766f74e9a25e92e0201f16b4163
      data->is_resizable = !!(swp_flags & WINE_SWP_RESIZABLE);
  
 diff --git a/dlls/winex11.drv/x11drv.h b/dlls/winex11.drv/x11drv.h
-index 4325c99e5c5dce9c2e03074e1c5319cf0a15e5ba..c0f628201bdb36ddde4bc9d3aab1e38712f0d96e 100644
+index 4325c99e5c..acd41a439a 100644
 --- a/dlls/winex11.drv/x11drv.h
 +++ b/dlls/winex11.drv/x11drv.h
-@@ -709,6 +709,13 @@ struct x11drv_win_data
+@@ -437,6 +437,7 @@ struct x11drv_thread_data
+     struct display_state pending_state;       /* display state tracking the pending / requested state */
+     struct display_state current_state;       /* display state tracking the current X11 state */
+     unsigned long net_active_window_serial;   /* serial of last pending _NET_ACTIVE_WINDOW request */
++    Time     net_active_window_time;          /* user timestamp of last _NET_ACTIVE_WINDOW request */
+ };
+ 
+ extern struct x11drv_thread_data *x11drv_init_thread_data(void);
+@@ -709,6 +710,13 @@ struct x11drv_win_data
      unsigned long wm_normal_hints_serial;/* serial of last pending WM_NORMAL_HINTS request */
      unsigned long configure_serial;    /* serial of last pending configure request */
      unsigned long net_wm_icon_serial;  /* serial of last pending _NET_WM_ICON request */
@@ -5479,7 +5978,7 @@ index 4325c99e5c5dce9c2e03074e1c5319cf0a15e5ba..c0f628201bdb36ddde4bc9d3aab1e387
  
  extern struct x11drv_win_data *get_win_data( HWND hwnd );
 diff --git a/include/Makefile.in b/include/Makefile.in
-index 72a8d43988cec7b916b0c1ce53a9b03888156832..f5a4487ee7c55888fc4b9af0a948606c8c30eaae 100644
+index 72a8d43988..f5a4487ee7 100644
 --- a/include/Makefile.in
 +++ b/include/Makefile.in
 @@ -1110,6 +1110,7 @@ SOURCES = \
@@ -5491,7 +5990,7 @@ index 72a8d43988cec7b916b0c1ce53a9b03888156832..f5a4487ee7c55888fc4b9af0a948606c
  	wine/atsvc.idl \
  	wine/condrv.h \
 diff --git a/include/ntuser.h b/include/ntuser.h
-index be41b33adfd79cf69d7735987af4be593eba4250..6d899ad229c1bc8183f7c60f0651f0e321d73144 100644
+index be41b33adf..6d899ad229 100644
 --- a/include/ntuser.h
 +++ b/include/ntuser.h
 @@ -333,7 +333,7 @@ struct format_entry
@@ -5513,7 +6012,7 @@ index be41b33adfd79cf69d7735987af4be593eba4250..6d899ad229c1bc8183f7c60f0651f0e3
  struct ntuser_property_list
 diff --git a/include/wine/appdefaults.h b/include/wine/appdefaults.h
 new file mode 100644
-index 0000000000000000000000000000000000000000..1ab9bded2920acb3121fb81e3a0e10a4f9712392
+index 0000000000..1ab9bded29
 --- /dev/null
 +++ b/include/wine/appdefaults.h
 @@ -0,0 +1,77 @@
@@ -5594,8 +6093,20 @@ index 0000000000000000000000000000000000000000..1ab9bded2920acb3121fb81e3a0e10a4
 +}
 +
 +#endif /* __WINE_APPDEFAULTS_H */
+diff --git a/include/wine/opengl_driver.h b/include/wine/opengl_driver.h
+index 6d1ff15433..d38bb586f3 100644
+--- a/include/wine/opengl_driver.h
++++ b/include/wine/opengl_driver.h
+@@ -168,6 +168,7 @@ struct egl_platform
+     EGLConfig           *configs;
+     BOOL                 has_EGL_EXT_present_opaque;
+     BOOL                 has_EGL_EXT_pixel_format_float;
++    BOOL                 has_EGL_KHR_gl_colorspace;
+ 
+     /* WGL_WINE_query_renderer info */
+     UINT                 device_id;
 diff --git a/include/wine/server_protocol.h b/include/wine/server_protocol.h
-index efc1cbe76c8435da0df14a5b16a456c2fdb2659c..d6caef83ef645463dd290587cbcb319a3589637c 100644
+index efc1cbe76c..d6caef83ef 100644
 --- a/include/wine/server_protocol.h
 +++ b/include/wine/server_protocol.h
 @@ -1185,6 +1185,14 @@ struct get_startup_info_reply
@@ -5668,8 +6179,38 @@ index efc1cbe76c8435da0df14a5b16a456c2fdb2659c..d6caef83ef645463dd290587cbcb319a
 +#define SERVER_PROTOCOL_VERSION 960
  
  #endif /* __WINE_WINE_SERVER_PROTOCOL_H */
+diff --git a/server/mapping.c b/server/mapping.c
+index a53b6b6830..47337972a1 100644
+--- a/server/mapping.c
++++ b/server/mapping.c
+@@ -1445,6 +1445,14 @@ void set_session_mapping( struct mapping *mapping )
+         return;
+     }
+ 
++    /* Dirty every page up front: the mapping is a sparse memfd, and reading a
++     * hole through a client's read-only MAP_PRIVATE view faults in the shared
++     * zero page, which never observes pages the server allocates later by
++     * writing (the client then sees permanently-stale zero session objects:
++     * window class registration / window creation fail at random). Writing
++     * allocates real shmem pages so in-place updates stay visible. */
++    memset( tmp, 0, size );
++
+     block->data = tmp;
+     block->offset = 0;
+     block->used_size = sizeof(*shared_session);
+@@ -1477,6 +1485,10 @@ static struct session_block *grow_session_mapping( mem_size_t needed )
+         return NULL;
+     }
+ 
++    /* see set_session_mapping: allocate real shmem pages so client-side
++     * read-only MAP_PRIVATE views never latch the hole zero page */
++    memset( tmp, 0, new_size - old_size );
++
+     block->data = tmp;
+     block->offset = old_size;
+     block->used_size = 0;
 diff --git a/server/process.c b/server/process.c
-index 077dc42edc48246e63498a57d12ae600249e9b87..66e4505c001dcdbfdb6cac7c868b97275ab93af3 100644
+index 077dc42edc..66e4505c00 100644
 --- a/server/process.c
 +++ b/server/process.c
 @@ -703,6 +703,7 @@ struct process *create_process( int fd, struct process *parent, unsigned int fla
@@ -5712,7 +6253,7 @@ index 077dc42edc48246e63498a57d12ae600249e9b87..66e4505c001dcdbfdb6cac7c868b9727
  
      LIST_FOR_EACH_ENTRY( thread, &process->thread_list, struct thread, proc_entry )
 diff --git a/server/process.h b/server/process.h
-index dff766d60d3c99361a19e7133420abfe22daeb09..fbbae70b6a579b542b07cdd679686f5295287324 100644
+index dff766d60d..fbbae70b6a 100644
 --- a/server/process.h
 +++ b/server/process.h
 @@ -90,6 +90,7 @@ struct process
@@ -5739,7 +6280,7 @@ index dff766d60d3c99361a19e7133420abfe22daeb09..fbbae70b6a579b542b07cdd679686f52
  {
      return is_machine_64bit( native_machine ) && !is_machine_64bit( process->machine );
 diff --git a/server/protocol.def b/server/protocol.def
-index 30235dfe5fb888dec8574800ac61a8200fccbb2d..cf8a1854165f977e73a55d23ff688a55509e6256 100644
+index 30235dfe5f..cf8a185416 100644
 --- a/server/protocol.def
 +++ b/server/protocol.def
 @@ -1176,6 +1176,14 @@ typedef volatile struct
@@ -5777,7 +6318,7 @@ index 30235dfe5fb888dec8574800ac61a8200fccbb2d..cf8a1854165f977e73a55d23ff688a55
 +    VARARG(cpu_override,cpu_topology_override); /* authoritative process CPU mapping */
 +@END
 diff --git a/server/ptrace.c b/server/ptrace.c
-index 2e6d93b7214b73b5ba7f5541932ea3111ed15a6f..b11f2b34150819047405339d352b58174d95a451 100644
+index 2e6d93b721..b11f2b3415 100644
 --- a/server/ptrace.c
 +++ b/server/ptrace.c
 @@ -53,6 +53,7 @@
@@ -5964,7 +6505,7 @@ index 2e6d93b7214b73b5ba7f5541932ea3111ed15a6f..b11f2b34150819047405339d352b5817
      }
      if (waitpid_thread( thread, SIGSTOP )) return 1;
 diff --git a/server/request_handlers.h b/server/request_handlers.h
-index 82797824f0a29062a7fb43e3509f79e4168bef31..ef683b5e96c3c004b90ec4b625de89c93a528181 100644
+index 82797824f0..ef683b5e96 100644
 --- a/server/request_handlers.h
 +++ b/server/request_handlers.h
 @@ -314,6 +314,7 @@ DECL_HANDLER(d3dkmt_share_objects);
@@ -5990,7 +6531,7 @@ index 82797824f0a29062a7fb43e3509f79e4168bef31..ef683b5e96c3c004b90ec4b625de89c9
 +C_ASSERT( sizeof(struct get_cpu_topology_override_request) == 16 );
 +C_ASSERT( sizeof(struct get_cpu_topology_override_reply) == 8 );
 diff --git a/server/request_trace.h b/server/request_trace.h
-index 497c88e6c2fea1e4ac855ceb28bf8b588190e679..b2bbf26031ee1ef776cd5e53d462b7319d5e3635 100644
+index 497c88e6c2..b2bbf26031 100644
 --- a/server/request_trace.h
 +++ b/server/request_trace.h
 @@ -24,6 +24,7 @@ static void dump_varargs_apc_result( const char *prefix, data_size_t size );
@@ -6050,7 +6591,7 @@ index 497c88e6c2fea1e4ac855ceb28bf8b588190e679..b2bbf26031ee1ef776cd5e53d462b731
  
  static const struct
 diff --git a/server/thread.c b/server/thread.c
-index 19c928f7beed5cec37ce068d791fb8cfea029788..3df58f0be4b4cedb21b56db93adcd3b6def36b99 100644
+index 19c928f7be..3df58f0be4 100644
 --- a/server/thread.c
 +++ b/server/thread.c
 @@ -60,6 +60,12 @@
@@ -6245,7 +6786,7 @@ index 19c928f7beed5cec37ce068d791fb8cfea029788..3df58f0be4b4cedb21b56db93adcd3b6
          else reply->self = 1;
          cancel_terminating_thread_asyncs( thread );
 diff --git a/server/thread.h b/server/thread.h
-index 96c643c64f1ee7bb18bec7ed47fb6ae10e01a68c..82b9560ff015817daf4038b84d152f93ad9cfff9 100644
+index 96c643c64f..82b9560ff0 100644
 --- a/server/thread.h
 +++ b/server/thread.h
 @@ -77,6 +77,7 @@ struct thread
@@ -6257,7 +6798,7 @@ index 96c643c64f1ee7bb18bec7ed47fb6ae10e01a68c..82b9560ff015817daf4038b84d152f93
      int                    unix_tid;      /* Unix tid of client */
      struct context        *context;       /* current context */
 diff --git a/server/trace.c b/server/trace.c
-index 0731063f8e3e27bbee5d171708fffdc34779972d..a04dfa21c4cbdcc4953328d4ece9d18e20decfbb 100644
+index 0731063f8e..a04dfa21c4 100644
 --- a/server/trace.c
 +++ b/server/trace.c
 @@ -1524,6 +1524,25 @@ static void dump_varargs_handle_infos( const char *prefix, data_size_t size )

@@ -1362,6 +1362,36 @@ webview2_ready()
     return 1
 }
 
+# run-ableton.sh's -_ForceGdiBackend fix (see there for the underlying bug and
+# credit to shibco/Jae) can only self-heal starting on Live's *second* launch,
+# since it writes the flag into a versioned Preferences directory that Live
+# itself creates on first run - it doesn't exist yet the first time the
+# launcher checks. This ENCORE-original addition closes that gap: right after
+# Ableton is installed/imported, before its first-ever launch, read the
+# installed executable's own PE version resource (via `strings`, already a
+# common dependency - no new one added) to predict the exact versioned
+# directory name ahead of time, and place the flag there proactively.
+preseed_gdi_backend_flag()
+{
+    local version user_dir pref_dir
+    [[ ${ENCORE_LIVE_GPU:-0} != 1 ]] || return 0
+    command -v strings >/dev/null 2>&1 || return 0
+    [[ -s $ableton ]] || return 0
+    version=$(strings -e l -- "$ableton" 2>/dev/null | grep -A1 -m1 '^ProductVersion$' | tail -n1)
+    [[ $version =~ ^[0-9]+(\.[0-9]+){1,3}$ ]] || return 0
+    # AppData/Roaming/Ableton does not exist yet at this point (Live only creates
+    # it on first launch); only the per-user home from wineboot's own profile
+    # skeleton is guaranteed to exist, so glob no deeper than that.
+    for user_dir in "$prefix"/drive_c/users/*/; do
+        [[ -d $user_dir ]] || continue
+        pref_dir="${user_dir}AppData/Roaming/Ableton/Live $version/Preferences"
+        mkdir -p -- "$pref_dir" 2>/dev/null || continue
+        grep -qx -- '-_ForceGdiBackend' "$pref_dir/Options.txt" 2>/dev/null ||
+            printf -- '-_ForceGdiBackend\n' >>"$pref_dir/Options.txt" 2>/dev/null || true
+    done
+    return 0
+}
+
 install_vc_runtime()
 {
     local setup status=0
@@ -2127,6 +2157,7 @@ main()
         ok 'Reusing Ableton Live already in the prefix'
     fi
 
+    preseed_gdi_backend_flag
     run_stage 'Install the Visual C++ runtime' install_vc_runtime
     if [[ $live_requires_webview2 -eq 1 ]]; then
         run_stage 'Install the WebView2 Runtime' install_webview2_runtime

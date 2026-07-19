@@ -205,6 +205,7 @@ The wizard remembers the selected prefix, Wine, and Ableton paths in `.encore/ru
 - `ENCORE_ABLETON`: Ableton executable path inside the prefix.
 - `ENCORE_CPU_TOPOLOGY`: runtime CPU topology override. The default is selected from the Linux affinity/cpuset and capped at eight logical CPUs.
 - `ENCORE_WEBVIEW2_FLAGS`: complete WebView2 flag override. Set it to an empty value to disable launcher-supplied flags.
+- `ENCORE_LIVE_GPU`: set to `1` to let Live use its own GPU/GL renderer instead of ENCORE's forced GDI backend. See [Known limitations](#known-limitations).
 
 Live's **Settings > Plug-ins > VST3 Custom Folder > Browse** control uses the native desktop folder picker. ENCORE exposes the selected host path to Live and its plug-in scanner, including folders outside your home directory and folders on mounted drives. No symlink or VST path variable is required.
 
@@ -212,6 +213,8 @@ Live's **Settings > Plug-ins > VST3 Custom Folder > Browse** control uses the na
 
 - GNOME/Wayland/Xwayland is the primary tested window-management path; other desktops remain experimental.
 - Live 11's installed folder does not retain a Visual C++ setup under `Redist` at all. ENCORE relies on Wine's built-in Visual C++ compatibility for it instead.
+- Live's own GPU/GL renderer misrenders under Wine - most visibly, the account sign-in dialog stays blank until the window is resized, and idle CPU usage stays elevated. ENCORE forces Live's built-in GDI rendering backend by default to avoid this; set `ENCORE_LIVE_GPU=1` to use Live's own renderer instead. Fixed by shibco ([`shibco/ableton-linux`](https://github.com/shibco/ableton-linux)), ported into ENCORE by Jae ([`jaesharp/ENCORE`](https://github.com/jaesharp/ENCORE)).
+- A fullscreen-mode cursor/click misalignment, a double-titlebar bug at high DPI, and several other windowing/stability issues are fixed by the Wine patches in `patches/encore-wine.patch` (see [patches/README.md](patches/README.md) for full credit and detail), but only when Wine is built from source with `--build-from-source`. The default prebuilt runtime download does not yet include these fixes.
 - Live 12 WebView2 currently requires `--no-sandbox` under this Wine build, weakening isolation for the remote Learn View page.
 - DirectComposition is disabled; Live 12 Learn View uses SwiftShader and CPU compositing.
 - Binary releases currently target x86-64 Linux. ARM64 and 32-bit Wine builds are not provided.
@@ -231,3 +234,5 @@ The next areas of development are:
 ENCORE does not redistribute Ableton software. `patches/encore-wine.patch` is a source delta against the pinned upstream Wine revision and remains subject to the applicable upstream file licenses. Binary releases include Wine's license and notices inside the runtime plus the complete corresponding patched Wine source as a separate release asset.
 
 ENCORE does not ship a replacement font binary. It creates a prefix-local Arial-compatible fallback from the user's installed Liberation Sans, retains the source font's license records, and records the source hash in the generated font metadata.
+
+Several windowing, graphics, and stability fixes in `patches/encore-wine.patch`, plus the GDI-rendering-backend workaround in `scripts/run-ableton.sh`, were originally identified and fixed by **shibco** (shibacomputer, `cade@parare.al`) in [`shibco/ableton-linux`](https://github.com/shibco/ableton-linux), and adapted to ENCORE by **Jae** (jaesharp) in their ENCORE fork ([`jaesharp/ENCORE`](https://github.com/jaesharp/ENCORE)). See [docs/live11-graphics.md](docs/live11-graphics.md) for full technical detail and credit.

@@ -61,4 +61,27 @@ else
 fi
 export WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS="$webview_arguments"
 
+# Force Live's GDI backend. Live's own GPU/GL renderer misrenders under Wine -
+# large black/blank content regions (most visibly the account sign-in dialog,
+# which never paints until the window is resized) plus a persistent CPU spin
+# on software GL. Ableton reads -_ForceGdiBackend from Options.txt in its
+# versioned Preferences directory, which Live creates on first run, so this
+# can't be placed ahead of time during setup; ensure the flag in every
+# existing Live Preferences directory on each launch instead - idempotent and
+# self-healing across Live version updates. Opt out with ENCORE_LIVE_GPU=1.
+#
+# Originally identified and fixed by shibco (shibacomputer, cade@parare.al) in
+# shibco/ableton-linux, and ported here by Jae (jaesharp) in their ENCORE fork
+# (https://github.com/jaesharp/ENCORE), who tracked it down to this exact
+# Options.txt mechanism and verified it against a real CPU-usage drop. Brought
+# into ENCORE from that fork with full credit to both.
+if [ "${ENCORE_LIVE_GPU:-0}" != 1 ]; then
+    for _encore_pref in "$PREFIX"/drive_c/users/*/AppData/Roaming/Ableton/"Live "*/Preferences; do
+        [ -d "$_encore_pref" ] || continue
+        if ! grep -qx -- '-_ForceGdiBackend' "$_encore_pref/Options.txt" 2>/dev/null; then
+            printf -- '-_ForceGdiBackend\n' >> "$_encore_pref/Options.txt"
+        fi
+    done
+fi
+
 exec "$WINE" "$ABLETON" "$@"
