@@ -33,19 +33,13 @@ WINEASIO_REVISION=${WINEASIO_REVISION:-b5e668103ad13e6f51f4118ed7090592213e5ca2}
 WINEASIO_VERSION=1.3.0
 WINEASIO_PATCH_DIR="$PROJECT_ROOT/patches/wineasio"
 WINEASIO_SOURCE=${WINEASIO_SOURCE:-"$PROJECT_ROOT/build/wineasio-src"}
-# The prebuilt runtime bundles WineASIO nested inside itself; a
-# --build-from-source install has no such tree yet, so build-wineasio.sh
-# installs to its own independent top-level directory instead. Detected by
-# Wine binary presence (same signal run-ableton.sh already uses), not by
-# WineASIO's own files, to avoid a stale leftover from an unrelated prior
-# run in the same project directory picking the wrong location.
-if [ -z "${WINEASIO_ROOT:-}" ]; then
-    if [ -x "$ENCORE_RUNTIME_ROOT/bin/wine" ]; then
-        WINEASIO_ROOT="$ENCORE_RUNTIME_ROOT/wineasio"
-    else
-        WINEASIO_ROOT="$PROJECT_ROOT/runtime/wineasio"
-    fi
-fi
+# build-wineasio.sh's own source-build output location. The prebuilt runtime
+# bundles WineASIO nested inside itself instead (see ENCORE_RUNTIME_ROOT) -
+# install.sh knows, for the specific run it's performing, which location is
+# actually in play, and overrides this explicitly rather than this script
+# guessing from ambient filesystem state (which an unrelated prebuilt runtime
+# left over from a prior, different install could make misleading).
+WINEASIO_ROOT=${WINEASIO_ROOT:-"$PROJECT_ROOT/runtime/wineasio"}
 
 say()
 {

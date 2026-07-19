@@ -2135,9 +2135,22 @@ main()
             run_stage 'Download verified ENCORE Wine runtime' "$SCRIPTS/download-wine-runtime.sh"
             wine=$DEFAULT_WINE
             verify_external_wine
+            # The prebuilt runtime bundles WineASIO nested inside itself,
+            # rather than at WINEASIO_ROOT's plain source-build default -
+            # this run just verified that runtime is what's in play, so set
+            # it explicitly instead of leaving later stages (configure-prefix.sh)
+            # to guess from ambient filesystem state.
+            export WINEASIO_ROOT="$ENCORE_RUNTIME_ROOT/wineasio"
             ;;
         *)
             ok "Reusing Wine: $wine"
+            # An explicitly reused --wine binary could be either kind of
+            # build; prefer a nested wineasio/ next to it if one exists,
+            # otherwise fall back to WINEASIO_ROOT's plain default.
+            wine_root=$(CDPATH= cd -- "$(dirname -- "$wine")/.." && pwd)
+            if [ -d "$wine_root/wineasio" ]; then
+                export WINEASIO_ROOT="$wine_root/wineasio"
+            fi
             ;;
     esac
 
