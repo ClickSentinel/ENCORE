@@ -22,10 +22,18 @@ wine_dll_overrides="${WINEDLLOVERRIDES:+$WINEDLLOVERRIDES;}mscoree,mshtml,wineme
 
 # WineASIO (low-latency audio, on by default unless --no-wineasio): bundled
 # nested inside the prebuilt runtime, or built to the plain top-level
-# directory by scripts/build-wineasio.sh for a source build - same
-# prebuilt-vs-source signal as $default_wine above. See docs/wineasio.md.
-wineasio_root="$ROOT/runtime/wine/wineasio"
-[ -f "$wineasio_root/wineasio64.dll.so" ] || wineasio_root="$ROOT/runtime/wineasio"
+# directory by scripts/build-wineasio.sh for a source build. Derived from
+# the Wine actually in use ($WINE, which may be a custom --wine/ENCORE_WINE
+# override, e.g. a saved runtime.conf pointing outside the standard
+# runtime/wine or build/wine64 locations) rather than independently
+# guessing from $ROOT, so a custom Wine location's own bundled WineASIO
+# is still found. See docs/wineasio.md.
+wineasio_root=${WINE%/wine}
+if [ "${wineasio_root##*/}" = bin ]; then
+    wineasio_root="$wineasio_root/../wineasio"
+else
+    wineasio_root="$ROOT/runtime/wineasio"
+fi
 wineasio_enabled=0
 if [ -f "$wineasio_root/wineasio64.dll.so" ]; then
     wineasio_enabled=1
