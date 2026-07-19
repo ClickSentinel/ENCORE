@@ -9,6 +9,8 @@ ORIGINAL_ARGS=("$@")
 WINE_REVISION=6eb2e4c32cc9e271856146df11ed3a5c2cf29234
 ENCORE_RUNTIME_VERSION=v0.1.0
 ENCORE_GLIBC_MIN=2.39
+WINEASIO_VERSION=1.3.0
+WINEASIO_REVISION=b5e668103ad13e6f51f4118ed7090592213e5ca2   # v1.3.0
 DEFAULT_PREFIX="$ROOT/ableton-prefix"
 SOURCE_WINE="$ROOT/build/wine64/wine"
 DEFAULT_WINE="$ROOT/runtime/wine/bin/wine"
@@ -1009,8 +1011,8 @@ wine_build_ready()
         done
         [[ ! -e $runtime_root/lib/wine/i386-unix ]] || return 1
         mapfile -t runtime_records <"$manifest"
-        [[ ${#runtime_records[@]} -eq 8 ]] || return 1
-        [[ ${runtime_records[0]} == ENCORE_WINE_RUNTIME_V1 ]] || return 1
+        [[ ${#runtime_records[@]} -eq 10 ]] || return 1
+        [[ ${runtime_records[0]} == ENCORE_WINE_RUNTIME_V2 ]] || return 1
         [[ ${runtime_records[1]} == "encore_version=$ENCORE_RUNTIME_VERSION" ]] || return 1
         [[ ${runtime_records[2]} == wine_version=11.13 ]] || return 1
         [[ ${runtime_records[3]} == "wine_revision=$WINE_REVISION" ]] || return 1
@@ -1021,6 +1023,10 @@ wine_build_ready()
         glibc_max=${BASH_REMATCH[1]}
         [[ $(printf '%s\n' "$glibc_max" 2.39 | sort -V | tail -n 1) == 2.39 ]] ||
             return 1
+        [[ ${runtime_records[8]} == "wineasio_version=$WINEASIO_VERSION" ]] || return 1
+        [[ ${runtime_records[9]} == "wineasio_revision=$WINEASIO_REVISION" ]] || return 1
+        [[ -f $runtime_root/wineasio/wineasio64.dll ]] || return 1
+        [[ -f $runtime_root/wineasio/wineasio64.dll.so ]] || return 1
         return 0
     fi
 
@@ -1171,6 +1177,19 @@ initialize_wine_prefix()
     WINEPREFIX="$prefix" WINEDEBUG=${WINEDEBUG:--all} \
         "$wine" reg add 'HKEY_CURRENT_USER\Software\Wine\DllOverrides' \
         /v winemenubuilder.exe /t REG_SZ /d '' /f >/dev/null 2>&1 || true
+
+    # Some installers (e.g. Ableton's own bundled Push audio driver) hit a
+    # non-fatal crash under Wine that their own installer logic already
+    # tolerates and continues past. Wine's crash handler still tries to
+    # symbolicate every such crash for its debugger dialog/backtrace first -
+    # on the packaged runtime specifically (stripped of debug symbols, unlike
+    # a --build-from-source tree) that symbol lookup fails slowly instead of
+    # quickly, and a retried non-fatal crash pays that penalty every time,
+    # compounding into many extra minutes for something that was always going
+    # to be discarded anyway. Disabling the crash dialog skips it outright.
+    WINEPREFIX="$prefix" WINEDEBUG=${WINEDEBUG:--all} \
+        "$wine" reg add 'HKEY_CURRENT_USER\Software\Wine\WineDbg' \
+        /v ShowCrashDialog /t REG_DWORD /d 0 /f >/dev/null 2>&1 || true
 }
 
 import_live_files()
