@@ -1318,8 +1318,46 @@ run_ableton_installer()
     # this command's output straight to the log instead of the console so a
     # normal install isn't cluttered with expected, already-handled noise;
     # the full detail is still available in the log if something looks wrong.
+    #
+    # tlsetupfx's own installer retries this same doomed driver registration
+    # repeatedly before giving up, and each retry re-triggers Wine's crash
+    # handler, which tries to symbolicate the crash for a backtrace before
+    # discarding it. Against the packaged runtime specifically (stripped of
+    # debug symbols, unlike a --build-from-source tree) that symbol lookup
+    # fails slowly instead of quickly, so this retry loop has been observed
+    # to run for many minutes even though Ableton's real installer package
+    # (Setup.msi, not the driver) typically finishes within seconds. Rather
+    # than wait on the installer's own wrapper process to eventually give up,
+    # poll for the one thing that actually matters - Ableton itself landing
+    # at $ableton - and kill the still-looping installer early the moment
+    # that's true, instead of leaving it to grind through the remaining
+    # retries for no benefit.
+    local wineserver_bin=$wine
+    wineserver_bin=${wineserver_bin%/wine}
+    if [[ ${wineserver_bin##*/} == bin ]]; then
+        wineserver_bin+=/wineserver
+    else
+        wineserver_bin+=/server/wineserver
+    fi
+
     WINEPREFIX="$prefix" WINEDEBUG=${WINEDEBUG:--all} \
-        "$wine" "$live_installer" >>"$log_file" 2>&1 || status=$?
+        "$wine" "$live_installer" >>"$log_file" 2>&1 &
+    local installer_pid=$! waited=0
+    while kill -0 "$installer_pid" 2>/dev/null; do
+        if [[ -s $ableton ]]; then
+            warn 'Ableton has already installed; not waiting for the installer'"'"'s own known non-fatal driver-registration retries to finish on their own.'
+            [[ -x $wineserver_bin ]] && WINEPREFIX="$prefix" "$wineserver_bin" -k >/dev/null 2>&1 || true
+            break
+        fi
+        sleep 2
+        waited=$((waited + 2))
+        ((waited < 900)) || {
+            warn 'The installer has not finished after 15 minutes; stopping it and checking whether Ableton actually installed anyway.'
+            [[ -x $wineserver_bin ]] && WINEPREFIX="$prefix" "$wineserver_bin" -k >/dev/null 2>&1 || true
+            break
+        }
+    done
+    wait "$installer_pid" 2>/dev/null || status=$?
     # The installer's own UI subprocess is known to report a nonzero exit or
     # crash even when the underlying installation completed successfully, so
     # exit status alone is not a reliable success signal. Whether Ableton
