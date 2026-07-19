@@ -181,7 +181,12 @@ jobs:
           export WINESERVER="$staged/bin/wineserver"
           export WINEASIO_SO="$PWD/runtime/wineasio/wineasio64.dll.so"
           export WINEPREFIX="$prefix"
-          export WINEDEBUG=-all
+          # TEMPORARY diagnostic tracing (not a fix) to find exactly where
+          # this step actually stalls, since three targeted guesses in a row
+          # (disabling winemenubuilder.exe, staging instead of the raw build
+          # tree, deferring WINEDLLPATH past wineboot) all failed to change
+          # the hang at all. Remove once the real cause is found.
+          export WINEDEBUG=+server,+process,+module,+winediag
           export WINEDLLOVERRIDES='mscoree,mshtml,winemenubuilder.exe,dcomp='
           export WINEASIO_DIR="$PWD/runtime/wineasio"
           export XDG_CACHE_HOME="$RUNNER_TEMP/encore-wineasio-cache"
