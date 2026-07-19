@@ -48,3 +48,17 @@ WINEPREFIX="$ENCORE_PREFIX" WINEDEBUG=-all \
     /v FileDialogPortal /t REG_SZ /d always /f >/dev/null
 
 say "Native folder picker enabled for Ableton; host files are available through $root_drive"
+
+# WineASIO: register the driver into the prefix if it was built (opt-in,
+# built by scripts/build-wineasio.sh). Live then lists it under ASIO devices.
+# See docs/wineasio.md for the low-latency JACK/PipeWire audio path.
+if [ -f "$WINEASIO_ROOT/wineasio64.dll" ] && [ -f "$WINEASIO_ROOT/wineasio64.dll.so" ]; then
+    system32="$ENCORE_PREFIX/drive_c/windows/system32"
+    for name in wineasio64.dll wineasio.dll; do
+        cp -f "$WINEASIO_ROOT/wineasio64.dll" "$system32/$name"
+    done
+    WINEPREFIX="$ENCORE_PREFIX" WINEDEBUG=-all \
+        WINEDLLPATH="$WINEASIO_ROOT${WINEDLLPATH:+:$WINEDLLPATH}" \
+        "$WINE_BINARY" regsvr32 "$WINEASIO_ROOT/wineasio64.dll.so" >/dev/null 2>&1
+    say "WineASIO registered for low-latency JACK/PipeWire audio"
+fi

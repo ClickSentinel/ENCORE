@@ -31,6 +31,7 @@ dependency_policy=ask
 build_mode=auto
 build_only=0
 configure_only=0
+no_wineasio=0
 install_desktop=1
 launch_policy=ask
 live_source=${ABLETON_LIVE_DIR:-}
@@ -106,6 +107,7 @@ Setup options:
   --no-build             Require an existing --wine/default runtime
   --build-only           Build Wine, then stop before Ableton setup
   --configure-only       Configure Wine, then stop (advanced diagnostics)
+  --no-wineasio          Skip building WineASIO during a source build
 
 Dependency and automation options:
   --install-deps         Install missing distro packages when needed
@@ -213,6 +215,9 @@ while (($#)); do
         --no-build)
             no_build_requested=1
             build_mode=skip
+            ;;
+        --no-wineasio)
+            no_wineasio=1
             ;;
         --prebuilt)
             [[ $wine_explicit -eq 0 ]] || {
@@ -2122,6 +2127,8 @@ main()
                 run_stage 'Configure ENCORE Wine' "$SCRIPTS/build-wine.sh" --configure-only
             else
                 run_stage 'Build ENCORE Wine from source' "$SCRIPTS/build-wine.sh"
+                [[ $no_wineasio -eq 1 ]] ||
+                    run_stage 'Build WineASIO low-latency audio' "$SCRIPTS/build-wineasio.sh"
             fi
             ;;
         download)

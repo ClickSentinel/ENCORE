@@ -25,6 +25,13 @@ WINE_INSTALL_PREFIX=${WINE_INSTALL_PREFIX:-/opt/encore-wine}
 ENCORE_PREFIX=${ENCORE_PREFIX:-"$PROJECT_ROOT/ableton-prefix"}
 WINE_PATCH="$PROJECT_ROOT/patches/encore-wine.patch"
 
+WINEASIO_REMOTE=${WINEASIO_REMOTE:-https://github.com/wineasio/wineasio.git}
+WINEASIO_REVISION=${WINEASIO_REVISION:-b5e668103ad13e6f51f4118ed7090592213e5ca2}   # v1.3.0
+WINEASIO_VERSION=1.3.0
+WINEASIO_PATCH_DIR="$PROJECT_ROOT/patches/wineasio"
+WINEASIO_SOURCE=${WINEASIO_SOURCE:-"$PROJECT_ROOT/build/wineasio-src"}
+WINEASIO_ROOT=${WINEASIO_ROOT:-"$PROJECT_ROOT/runtime/wineasio"}
+
 say()
 {
     printf '%s\n' "$*"

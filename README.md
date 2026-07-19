@@ -83,6 +83,7 @@ If setup is interrupted, run `./install.sh` again. ENCORE safely reuses complete
 - Windows VST3 plug-in scanning and hosting, including resizable custom plug-in windows with working mouse input.
 - VST3 custom folders anywhere the user selects, including mounted drives, through the native desktop folder picker.
 - Audio through Wine's PulseAudio backend on both PulseAudio systems and PipeWire systems using `pipewire-pulse`.
+- Optional low-latency audio through WineASIO, bridging directly to the host's JACK/PipeWire graph. Built by default with `--build-from-source`; see [docs/wineasio.md](docs/wineasio.md).
 - Guided HiDPI scaling, themed application menus, Live 12 WebView2 Learn View support, and dynamic CPU topology selection.
 - Application-menu integration for GNOME, KDE, and other desktops that support freedesktop desktop entries.
 
@@ -191,6 +192,7 @@ Useful alternatives:
 ./install.sh --no-build --dpi 96
 ./install.sh --prefix "$HOME/Music/Ableton Prefix"
 ./install.sh --live-installer "/path/to/Ableton Live 12 Suite Installer.exe"
+./install.sh --build-from-source --no-wineasio
 ```
 
 `--live-installer` requires an interactive terminal (the official installer is a graphical wizard, not scriptable), so it cannot combine with `--non-interactive`. `--dry-run` is the exception — it previews the plan without running anything, so it works either way.

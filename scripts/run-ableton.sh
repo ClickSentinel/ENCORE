@@ -20,6 +20,15 @@ fi
 
 wine_dll_overrides="${WINEDLLOVERRIDES:+$WINEDLLOVERRIDES;}mscoree,mshtml,winemenubuilder.exe,dcomp="
 
+# WineASIO (opt-in low-latency audio): enabled when scripts/build-wineasio.sh has
+# produced a driver in runtime/wineasio/. See docs/wineasio.md.
+wineasio_root="$ROOT/runtime/wineasio"
+wineasio_enabled=0
+if [ -f "$wineasio_root/wineasio64.dll.so" ]; then
+    wineasio_enabled=1
+    WINEDLLPATH="$wineasio_root${WINEDLLPATH:+:$WINEDLLPATH}"
+fi
+
 if [ "${ENCORE_CPU_TOPOLOGY+x}" = x ]; then
     cpu_topology=$ENCORE_CPU_TOPOLOGY
 elif [ "${WINE_CPU_TOPOLOGY+x}" = x ]; then
@@ -40,6 +49,15 @@ if [ "${ENCORE_DRY_RUN:-0}" = 1 ]; then
     printf 'ENCORE_ABLETON_MENU_THEME=%s\n' "${ENCORE_ABLETON_MENU_THEME-1}"
     printf 'WINE_CPU_TOPOLOGY=%s\n' "$cpu_topology"
     printf 'WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS=%s\n' "$webview_arguments"
+    if [ "$wineasio_enabled" = 1 ]; then
+        printf 'WINEDLLPATH=%s\n' "$WINEDLLPATH"
+        printf 'WINEASIO_NUMBER_INPUTS=%s\n' "${WINEASIO_NUMBER_INPUTS:-2}"
+        printf 'WINEASIO_NUMBER_OUTPUTS=%s\n' "${WINEASIO_NUMBER_OUTPUTS:-2}"
+        printf 'WINEASIO_FIXED_BUFFERSIZE=%s\n' "${WINEASIO_FIXED_BUFFERSIZE:-on}"
+        printf 'WINEASIO_PREFERRED_BUFFERSIZE=%s\n' "${WINEASIO_PREFERRED_BUFFERSIZE:-256}"
+        printf 'WINEASIO_CONNECT_TO_HARDWARE=%s\n' "${WINEASIO_CONNECT_TO_HARDWARE:-on}"
+        printf 'jacklinkd=%s\n' "$wineasio_root/jacklinkd"
+    fi
     exit 0
 fi
 
@@ -82,6 +100,30 @@ if [ "${ENCORE_LIVE_GPU:-0}" != 1 ]; then
             printf -- '-_ForceGdiBackend\n' >> "$_encore_pref/Options.txt"
         fi
     done
+fi
+
+if [ "$wineasio_enabled" = 1 ]; then
+    export WINEDLLPATH
+    export WINEASIO_NUMBER_INPUTS="${WINEASIO_NUMBER_INPUTS:-2}"
+    export WINEASIO_NUMBER_OUTPUTS="${WINEASIO_NUMBER_OUTPUTS:-2}"
+    export WINEASIO_FIXED_BUFFERSIZE="${WINEASIO_FIXED_BUFFERSIZE:-on}"
+    export WINEASIO_PREFERRED_BUFFERSIZE="${WINEASIO_PREFERRED_BUFFERSIZE:-256}"
+    export WINEASIO_CONNECT_TO_HARDWARE="${WINEASIO_CONNECT_TO_HARDWARE:-on}"
+    # The system libjack.so.0 may resolve to a real standalone JACK server
+    # (e.g. installed as a build dependency) instead of PipeWire's own
+    # JACK-compatible replacement, which lives in a separate directory meant
+    # to be found via LD_LIBRARY_PATH - the same mechanism PipeWire's own
+    # pw-jack wrapper uses. Without this, WineASIO loads the real libjack,
+    # finds no standalone JACK server running, and fails to open the device.
+    # ${LIB} is a dynamic-linker token (expands to lib/lib64/lib/<triplet>
+    # depending on the distro), not a shell variable - left unexpanded here
+    # on purpose. A nonexistent path in LD_LIBRARY_PATH is silently ignored,
+    # so this is safe on systems without PipeWire's JACK shim installed.
+    # shellcheck disable=SC2016
+    export LD_LIBRARY_PATH='/usr/${LIB}/pipewire-0.3/jack'"${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
+    if [ -x "$wineasio_root/jacklinkd" ] && ! pgrep -x jacklinkd >/dev/null 2>&1; then
+        "$wineasio_root/jacklinkd" >/dev/null 2>&1 &
+    fi
 fi
 
 exec "$WINE" "$ABLETON" "$@"
