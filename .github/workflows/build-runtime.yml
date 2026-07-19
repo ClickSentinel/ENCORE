@@ -181,12 +181,6 @@ jobs:
           export WINESERVER="$staged/bin/wineserver"
           export WINEASIO_SO="$PWD/runtime/wineasio/wineasio64.dll.so"
           export WINEPREFIX="$prefix"
-          # TEMPORARY diagnostic tracing (not a fix) to find exactly where
-          # this step actually stalls, since three targeted guesses in a row
-          # (disabling winemenubuilder.exe, staging instead of the raw build
-          # tree, deferring WINEDLLPATH past wineboot) all failed to change
-          # the hang at all. Remove once the real cause is found.
-          export WINEDEBUG=+server,+process,+module,+winediag
           export WINEDLLOVERRIDES='mscoree,mshtml,winemenubuilder.exe,dcomp='
           export WINEASIO_DIR="$PWD/runtime/wineasio"
           export XDG_CACHE_HOME="$RUNNER_TEMP/encore-wineasio-cache"
@@ -287,7 +281,7 @@ jobs:
           "$RUNTIME/bin/wine" reg.exe query 'HKCU\Software\Wine' >/dev/null
           windows_path=$("$RUNTIME/bin/winepath" 'C:\windows' | tr -d '\r')
           test -d "$windows_path"
-          "$RUNTIME/bin/wine" regsvr32 "$RUNTIME/wineasio/wineasio64.dll.so"
+          "$RUNTIME/bin/wine" regsvr32 /s "$RUNTIME/wineasio/wineasio64.dll.so"
           "$RUNTIME/bin/wineserver" -k
           "$RUNTIME/bin/wineserver" -w
           test -s "$WINEPREFIX/system.reg"
@@ -406,7 +400,7 @@ jobs:
           "$RUNTIME/bin/wine" reg.exe query 'HKCU\Software\Wine' >/dev/null
           windows_path=$("$RUNTIME/bin/winepath" 'C:\windows' | tr -d '\r')
           test -d "$windows_path"
-          "$RUNTIME/bin/wine" regsvr32 "$RUNTIME/wineasio/wineasio64.dll.so"
+          "$RUNTIME/bin/wine" regsvr32 /s "$RUNTIME/wineasio/wineasio64.dll.so"
           "$RUNTIME/bin/wineserver" -k
           "$RUNTIME/bin/wineserver" -w
           test -s "$WINEPREFIX/system.reg"
