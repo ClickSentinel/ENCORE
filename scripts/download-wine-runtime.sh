@@ -84,7 +84,22 @@ if [ -e "$ENCORE_RUNTIME_ROOT" ] || [ -L "$ENCORE_RUNTIME_ROOT" ]; then
         say "Reusing verified ENCORE runtime: $ENCORE_RUNTIME_ROOT"
         exit 0
     }
-    die "the runtime destination exists but is not a valid ENCORE runtime: $ENCORE_RUNTIME_ROOT"
+    # No user data lives in the runtime directory (unlike the Wine prefix,
+    # which holds the actual Ableton install and user settings, and is never
+    # touched here) - it's disposable ENCORE-managed infrastructure, so a
+    # recognizable ENCORE runtime that merely failed validation (e.g. an
+    # older manifest schema, from before an ENCORE upgrade) is safe to
+    # replace automatically rather than forcing the user to manually delete
+    # it themselves. Anything that doesn't even look like an ENCORE
+    # manifest is left alone and still a hard failure, in case this path
+    # was pointed at something unrelated by mistake.
+    manifest="$ENCORE_RUNTIME_ROOT/.encore-runtime"
+    if [ -f "$manifest" ] && head -n1 "$manifest" 2>/dev/null | grep -qx 'ENCORE_WINE_RUNTIME_V[0-9]\+'; then
+        say "Replacing outdated ENCORE runtime: $ENCORE_RUNTIME_ROOT"
+        rm -rf -- "$ENCORE_RUNTIME_ROOT"
+    else
+        die "the runtime destination exists but is not a valid ENCORE runtime: $ENCORE_RUNTIME_ROOT"
+    fi
 fi
 
 [ "${#ENCORE_RUNTIME_SHA256}" -eq 64 ] ||
