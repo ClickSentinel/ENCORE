@@ -107,7 +107,7 @@ Setup options:
   --no-build             Require an existing --wine/default runtime
   --build-only           Build Wine, then stop before Ableton setup
   --configure-only       Configure Wine, then stop (advanced diagnostics)
-  --no-wineasio          Skip building WineASIO during a source build
+  --no-wineasio          Don't set up WineASIO low-latency audio
 
 Dependency and automation options:
   --install-deps         Install missing distro packages when needed
@@ -2148,6 +2148,7 @@ main()
     fi
 
     export ENCORE_PREFIX=$prefix ENCORE_WINE=$wine ENCORE_ABLETON=$ableton
+    export ENCORE_NO_WINEASIO=$no_wineasio
     pause_for_live_to_close
     run_stage 'Register the ENCORE prefix' mark_prefix
     run_stage 'Initialize the Wine prefix' initialize_wine_prefix

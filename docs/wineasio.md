@@ -1,10 +1,13 @@
 # WineASIO: low-latency audio (WineASIO → JACK/PipeWire)
 
-ENCORE can build and wire up **WineASIO**, an ASIO driver that bridges Windows
-ASIO to the host's JACK server (PipeWire's JACK compatibility layer on a modern
-desktop). Live then sees a low-latency **WineASIO** device instead of routing
-through the higher-latency default PulseAudio path. This is opt-in and built
-from source alongside Wine.
+ENCORE bundles **WineASIO**, an ASIO driver that bridges Windows ASIO to the
+host's JACK server (PipeWire's JACK compatibility layer on a modern desktop).
+Live can then use a low-latency **WineASIO** device instead of routing through
+the higher-latency default PulseAudio path. It ships by default on both
+install paths — bundled in the prebuilt runtime archive, and built alongside
+Wine on a source install — and registers into every new prefix automatically;
+opt out entirely with `--no-wineasio`. Ableton itself still won't use it until
+you select it as the active driver: see [First use](#first-use-in-live).
 
 > WineASIO is a separate project (GPL-2.0+), pinned and fetched like Wine.
 
@@ -12,7 +15,7 @@ from source alongside Wine.
 
 | Piece | What it is | Where |
 | --- | --- | --- |
-| WineASIO driver | `wineasio.dll` (+ Unix `.so`), built against ENCORE's Wine | `runtime/wineasio/` (generated) |
+| WineASIO driver | `wineasio.dll` (+ Unix `.so`), built against ENCORE's Wine | Bundled in the prebuilt runtime archive under `wineasio/`, or built to `runtime/wineasio/` on a source install (either way, resolved via `WINEASIO_ROOT`) |
 | Sample-rate patch | Keeps the backend rate instead of the fatal `ASE_NoClock` | [`patches/wineasio/0001-clamp-sample-rate.patch`](../patches/wineasio/0001-clamp-sample-rate.patch) |
 | `jacklinkd` | Restores JACK links after an audio device replug | `tools/jacklinkd.c` → `runtime/wineasio/jacklinkd` |
 | Build step | Fetch + patch + build + install | [`scripts/build-wineasio.sh`](../scripts/build-wineasio.sh) |
@@ -82,25 +85,33 @@ has seen (it can't invent routing for a never-connected device).
 
 ## Building it
 
-WineASIO is built by default during a **source** install and installed to
-`runtime/wineasio/` (nothing is copied into the Wine tree):
+WineASIO is set up by default on **either** install path:
 
 ```sh
-./install.sh                 # builds Wine, then WineASIO + jacklinkd
-./install.sh --no-wineasio   # skip WineASIO
+./install.sh                 # --prebuilt (default): downloads Wine + bundled WineASIO
+./install.sh --build-from-source  # builds Wine, then WineASIO + jacklinkd from source
+./install.sh --no-wineasio   # either path, but skip WineASIO entirely
 ./scripts/build-wineasio.sh  # (re)build it on its own against an already-built Wine
 ```
 
-`build-wineasio.sh` clones WineASIO at the pinned revision (`WINEASIO_REVISION`
-in `common.sh` — 1.3.0), applies `patches/wineasio/*.patch`, stages a private
-install of the built Wine for the ABI, builds the 64-bit driver, and compiles
-`jacklinkd`. It needs the **JACK development headers**
-(`libjack-jackd2-dev` / `pipewire-jack-audio-connection-kit-devel`) — already
-added to `install-dependencies.sh`'s build profile — and the host
-**`libjack.so.0`** at runtime (`pipewire-jack`, added to the runtime profile).
+For the **prebuilt** path, `download-wine-runtime.sh` verifies and extracts
+the bundled driver alongside the rest of the runtime — nothing is built
+locally. For a **source** build, `build-wineasio.sh` clones WineASIO at the
+pinned revision (`WINEASIO_REVISION` in `common.sh` — 1.3.0), applies
+`patches/wineasio/*.patch`, stages a private install of the built Wine for the
+ABI, builds the 64-bit driver, and compiles `jacklinkd` — this needs the
+**JACK development headers** (`libjack-jackd2-dev` /
+`pipewire-jack-audio-connection-kit-devel`), already added to
+`install-dependencies.sh`'s build profile.
 
-The prebuilt-runtime path (`--prebuilt`) does not include WineASIO; use a
-source build (`--build-from-source`) for low-latency audio.
+Either way, the host's **`libjack.so.0`** is needed at runtime (`pipewire-jack`,
+already in the runtime dependency profile for both paths) — this is what
+`run-ableton.sh`'s `LD_LIBRARY_PATH` fix (below) actually resolves against.
+
+`WINEASIO_ROOT` (in `common.sh`) resolves automatically to wherever the driver
+actually landed: nested inside the prebuilt runtime for `--prebuilt`, or the
+independent `runtime/wineasio/` directory for a source build — the same
+signal `run-ableton.sh` already uses to pick which Wine binary to launch.
 
 ## First use (in Live)
 

@@ -239,6 +239,9 @@ jobs:
           tar -xJf "dist/$ENCORE_RUNTIME_ASSET" -C "$RUNNER_TEMP/encore runtime"
           runtime="$RUNNER_TEMP/encore runtime/encore-wine"
           test "$("$runtime/bin/wine" --version)" = wine-11.13
+          test -s "$runtime/wineasio/wineasio64.dll"
+          test -s "$runtime/wineasio/wineasio64.dll.so"
+          test -x "$runtime/wineasio/jacklinkd"
           while IFS= read -r -d '' candidate; do
             readelf -h "$candidate" >/dev/null 2>&1 || continue
             if ! dependencies=$(LD_LIBRARY_PATH="$runtime/lib/wine/x86_64-unix" \
@@ -259,6 +262,7 @@ jobs:
           export WINEPREFIX="$prefix"
           export WINEDEBUG=-all
           export WINEDLLOVERRIDES='mscoree,mshtml,winemenubuilder.exe,dcomp='
+          export WINEDLLPATH="$runtime/wineasio"
           export XDG_CACHE_HOME="$RUNNER_TEMP/encore-wine-cache"
           xvfb-run -a timeout --signal=TERM --kill-after=10s 90s \
             bash -Eeuo pipefail <<'SMOKE'
@@ -278,13 +282,14 @@ jobs:
           "$RUNTIME/bin/wine" reg.exe query 'HKCU\Software\Wine' >/dev/null
           windows_path=$("$RUNTIME/bin/winepath" 'C:\windows' | tr -d '\r')
           test -d "$windows_path"
+          "$RUNTIME/bin/wine" regsvr32 "$RUNTIME/wineasio/wineasio64.dll.so"
           "$RUNTIME/bin/wineserver" -k
           "$RUNTIME/bin/wineserver" -w
           test -s "$WINEPREFIX/system.reg"
           trap - EXIT HUP INT TERM
           SMOKE
         env:
-          ENCORE_RUNTIME_ASSET: encore-wine-11.13-r1-x86_64-linux-gnu.tar.xz
+          ENCORE_RUNTIME_ASSET: encore-wine-11.13-r2-x86_64-linux-gnu.tar.xz
 
       - name: Attest release candidates
         if: ${{ inputs.artifact_run_id == '' }}
@@ -349,10 +354,13 @@ jobs:
           sha256sum -c SHA256SUMS
           cd ..
           mkdir -p "$RUNNER_TEMP/runtime"
-          tar -xJf dist/encore-wine-11.13-r1-x86_64-linux-gnu.tar.xz \
+          tar -xJf dist/encore-wine-11.13-r2-x86_64-linux-gnu.tar.xz \
             -C "$RUNNER_TEMP/runtime"
           runtime="$RUNNER_TEMP/runtime/encore-wine"
           test "$("$runtime/bin/wine" --version)" = wine-11.13
+          test -s "$runtime/wineasio/wineasio64.dll"
+          test -s "$runtime/wineasio/wineasio64.dll.so"
+          test -x "$runtime/wineasio/jacklinkd"
           while IFS= read -r -d '' candidate; do
             readelf -h "$candidate" >/dev/null 2>&1 || continue
             if ! dependencies=$(LD_LIBRARY_PATH="$runtime/lib/wine/x86_64-unix" \
@@ -373,6 +381,7 @@ jobs:
           export WINEPREFIX="$prefix"
           export WINEDEBUG=-all
           export WINEDLLOVERRIDES='mscoree,mshtml,winemenubuilder.exe,dcomp='
+          export WINEDLLPATH="$runtime/wineasio"
           export XDG_CACHE_HOME="$RUNNER_TEMP/encore-wine-cache"
           xvfb-run -a timeout --signal=TERM --kill-after=10s 90s \
             bash -Eeuo pipefail <<'SMOKE'
@@ -392,6 +401,7 @@ jobs:
           "$RUNTIME/bin/wine" reg.exe query 'HKCU\Software\Wine' >/dev/null
           windows_path=$("$RUNTIME/bin/winepath" 'C:\windows' | tr -d '\r')
           test -d "$windows_path"
+          "$RUNTIME/bin/wine" regsvr32 "$RUNTIME/wineasio/wineasio64.dll.so"
           "$RUNTIME/bin/wineserver" -k
           "$RUNTIME/bin/wineserver" -w
           test -s "$WINEPREFIX/system.reg"

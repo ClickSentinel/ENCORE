@@ -118,12 +118,20 @@ objdump -f "$runtime_dir/lib/wine/x86_64-windows/ntdll.dll" |
     grep -Eq 'architecture: i386:x86-64(,|$)' ||
     die 'packaged x86_64 ntdll.dll is not a 64-bit PE binary'
 
+say "Staging the built WineASIO driver"
+for required in wineasio64.dll wineasio64.dll.so jacklinkd; do
+    [ -e "$WINEASIO_ROOT/$required" ] || die "WineASIO is not built: $WINEASIO_ROOT/$required"
+done
+mkdir -p "$runtime_dir/wineasio"
+cp -a "$WINEASIO_ROOT/." "$runtime_dir/wineasio/"
+
 say "Stripping runtime debug symbols"
 while IFS= read -r -d '' file; do
     if readelf -h "$file" >/dev/null 2>&1; then
         strip --strip-unneeded "$file"
     fi
-done < <(find "$runtime_dir/bin" "$runtime_dir/lib/wine/x86_64-unix" -type f -print0)
+done < <(find "$runtime_dir/bin" "$runtime_dir/lib/wine/x86_64-unix" \
+    "$runtime_dir/wineasio" -type f -print0)
 
 mkdir -p "$runtime_dir/licenses/wine"
 for license in LICENSE COPYING.LIB NOTICES.md; do
@@ -163,7 +171,7 @@ if find "$runtime_dir" -type f \( -name '*.a' -o -name '*.o' -o -name '*.la' \) 
 fi
 
 cat >"$runtime_dir/.encore-runtime" <<EOF
-ENCORE_WINE_RUNTIME_V1
+ENCORE_WINE_RUNTIME_V2
 encore_version=$ENCORE_RUNTIME_VERSION
 wine_version=11.13
 wine_revision=$WINE_REVISION
@@ -171,6 +179,8 @@ patch_sha256=$patch_sha256
 arch=x86_64
 pe_archs=i386,x86_64
 glibc_max=$glibc_max
+wineasio_version=$WINEASIO_VERSION
+wineasio_revision=$WINEASIO_REVISION
 EOF
 
 cat >"$runtime_dir/BUILD-INFO.txt" <<EOF
@@ -182,6 +192,8 @@ Host architecture: x86_64-linux-gnu
 Windows PE architectures: i386, x86_64
 Maximum required glibc symbol: $glibc_max
 NTSync: compiled in and used when /dev/ntsync is available
+WineASIO version: $WINEASIO_VERSION
+WineASIO upstream revision: $WINEASIO_REVISION
 Source archive: $ENCORE_SOURCE_ASSET
 EOF
 

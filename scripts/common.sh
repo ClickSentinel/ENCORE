@@ -10,12 +10,15 @@ WINE_SOURCE_DATE_EPOCH=1783719732
 WINE_REMOTE=https://gitlab.winehq.org/wine/wine.git
 ENCORE_RELEASE_VERSION=v0.1.3
 ENCORE_RUNTIME_VERSION=v0.1.0
-ENCORE_RUNTIME_REVISION=r1
-ENCORE_RUNTIME_ASSET=encore-wine-11.13-r1-x86_64-linux-gnu.tar.xz
-ENCORE_SOURCE_ASSET=encore-wine-11.13-r1-source.tar.xz
+ENCORE_RUNTIME_REVISION=r2
+ENCORE_RUNTIME_ASSET=encore-wine-11.13-r2-x86_64-linux-gnu.tar.xz
+ENCORE_SOURCE_ASSET=encore-wine-11.13-r2-source.tar.xz
 ENCORE_BUNDLE_ASSET=ENCORE-v0.1.3-linux-x86_64.tar.xz
 ENCORE_GLIBC_MIN=2.39
-ENCORE_RUNTIME_SHA256=${ENCORE_RUNTIME_SHA256:-1b574d0449e7239f152f939e135cfe8e122fec63a2b28cc1368d58d250750b84}
+# r2's archive contents changed (bundled WineASIO, manifest schema V2), so the
+# r1 checksum can't carry over; left unset until a real r2 build publishes one
+# (download-wine-runtime.sh already fails clearly on an unset/short value).
+ENCORE_RUNTIME_SHA256=${ENCORE_RUNTIME_SHA256:-}
 ENCORE_RELEASE_BASE_URL=${ENCORE_RELEASE_BASE_URL:-https://github.com/wowitsjack/ENCORE/releases/download/$ENCORE_RELEASE_VERSION}
 ENCORE_RUNTIME_ROOT=${ENCORE_RUNTIME_ROOT:-"$PROJECT_ROOT/runtime/wine"}
 WINE_SOURCE=${WINE_SOURCE:-"$PROJECT_ROOT/wine"}
@@ -30,7 +33,19 @@ WINEASIO_REVISION=${WINEASIO_REVISION:-b5e668103ad13e6f51f4118ed7090592213e5ca2}
 WINEASIO_VERSION=1.3.0
 WINEASIO_PATCH_DIR="$PROJECT_ROOT/patches/wineasio"
 WINEASIO_SOURCE=${WINEASIO_SOURCE:-"$PROJECT_ROOT/build/wineasio-src"}
-WINEASIO_ROOT=${WINEASIO_ROOT:-"$PROJECT_ROOT/runtime/wineasio"}
+# The prebuilt runtime bundles WineASIO nested inside itself; a
+# --build-from-source install has no such tree yet, so build-wineasio.sh
+# installs to its own independent top-level directory instead. Detected by
+# Wine binary presence (same signal run-ableton.sh already uses), not by
+# WineASIO's own files, to avoid a stale leftover from an unrelated prior
+# run in the same project directory picking the wrong location.
+if [ -z "${WINEASIO_ROOT:-}" ]; then
+    if [ -x "$ENCORE_RUNTIME_ROOT/bin/wine" ]; then
+        WINEASIO_ROOT="$ENCORE_RUNTIME_ROOT/wineasio"
+    else
+        WINEASIO_ROOT="$PROJECT_ROOT/runtime/wineasio"
+    fi
+fi
 
 say()
 {

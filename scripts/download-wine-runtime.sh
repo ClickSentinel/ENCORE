@@ -57,10 +57,13 @@ validate_runtime()
     [ -f "$root/lib/wine/x86_64-windows/wineboot.exe" ] || return 1
     [ ! -e "$root/lib/wine/i386-unix" ] || return 1
     [ -f "$root/share/wine/wine.inf" ] || return 1
+    [ -f "$root/wineasio/wineasio64.dll" ] || return 1
+    [ -f "$root/wineasio/wineasio64.dll.so" ] || return 1
+    [ -x "$root/wineasio/jacklinkd" ] || return 1
     [ -f "$manifest" ] || return 1
     mapfile -t records <"$manifest"
-    [ "${#records[@]}" -eq 8 ] || return 1
-    [ "${records[0]}" = ENCORE_WINE_RUNTIME_V1 ] || return 1
+    [ "${#records[@]}" -eq 10 ] || return 1
+    [ "${records[0]}" = ENCORE_WINE_RUNTIME_V2 ] || return 1
     [ "${records[1]}" = "encore_version=$ENCORE_RUNTIME_VERSION" ] || return 1
     [ "${records[2]}" = wine_version=11.13 ] || return 1
     [ "${records[3]}" = "wine_revision=$WINE_REVISION" ] || return 1
@@ -71,6 +74,8 @@ validate_runtime()
     glibc_max=${BASH_REMATCH[1]}
     [ "$(printf '%s\n' "$glibc_max" 2.39 | sort -V | tail -n 1)" = 2.39 ] ||
         return 1
+    [ "${records[8]}" = "wineasio_version=$WINEASIO_VERSION" ] || return 1
+    [ "${records[9]}" = "wineasio_revision=$WINEASIO_REVISION" ] || return 1
     [ "$("$root/bin/wine" --version 2>/dev/null)" = wine-11.13 ] || return 1
 }
 
