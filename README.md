@@ -42,7 +42,7 @@ ENCORE is a guided Wine compatibility setup for running supported Windows editio
 
 You need:
 
-- an x86-64 PC running Ubuntu 22.04 or newer, Debian 12 or newer, Fedora, Arch Linux, or CachyOS;
+- an x86-64 PC running Ubuntu 24.04 or newer, Debian 12 or newer, Fedora, Arch Linux, or CachyOS;
 - about 3.5 GiB of free space, plus the size of your Ableton installation;
 - an internet connection for dependencies and, with Live 12, the first WebView2 setup;
 - permission to use sudo if ENCORE needs to install missing system packages;
@@ -133,14 +133,14 @@ Each release publishes four files:
 - `encore-wine-11.13-r1-source.tar.xz`: the complete corresponding patched Wine source and build instructions;
 - `SHA256SUMS`: checksums for all three archives.
 
-The runtime uses an x86-64 Unix host build plus Wine's combined i386 and x86-64 Windows PE support. This lets the 64-bit Live application and its retained 32-bit prerequisite installers run in one prefix. It is built on Ubuntu 22.04 against glibc 2.35, stripped, audited for absolute build paths and unsafe runtime search paths, then smoke-tested on Ubuntu, Fedora, and Arch Linux. Graphics drivers, audio services, desktop portals, and glibc remain supplied by the user's distribution so the bundle can work with the host desktop and GPU.
+The runtime uses an x86-64 Unix host build plus Wine's combined i386 and x86-64 Windows PE support. This lets the 64-bit Live application and its retained 32-bit prerequisite installers run in one prefix. It is built on Ubuntu 24.04 against glibc 2.39, stripped, audited for absolute build paths and unsafe runtime search paths, then smoke-tested on Ubuntu, Fedora, and Arch Linux. Graphics drivers, audio services, desktop portals, and glibc remain supplied by the user's distribution so the bundle can work with the host desktop and GPU.
 
 ENCORE compiles upstream Wine 11.13 NTSync support. It uses `/dev/ntsync` when the running kernel provides it and falls back to normal Wine server synchronization when it does not. ENCORE does not currently add Proton or Wine-GE Fsync patches.
 
 ## Supported systems
 
 - x86-64 Linux.
-- Ubuntu 22.04 or newer and Debian 12 or newer through `apt`.
+- Ubuntu 24.04 or newer and Debian 12 or newer through `apt`.
 - Fedora through `dnf`/`dnf5`.
 - Arch Linux and CachyOS through `pacman`.
 - A Wayland session with Xwayland available is recommended.

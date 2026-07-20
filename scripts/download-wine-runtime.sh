@@ -69,7 +69,7 @@ validate_runtime()
     [ "${records[6]}" = pe_archs=i386,x86_64 ] || return 1
     [[ ${records[7]} =~ ^glibc_max=([0-9]+\.[0-9]+)$ ]] || return 1
     glibc_max=${BASH_REMATCH[1]}
-    [ "$(printf '%s\n' "$glibc_max" 2.35 | sort -V | tail -n 1)" = 2.35 ] ||
+    [ "$(printf '%s\n' "$glibc_max" 2.39 | sort -V | tail -n 1)" = 2.39 ] ||
         return 1
     [ "$("$root/bin/wine" --version 2>/dev/null)" = wine-11.13 ] || return 1
 }

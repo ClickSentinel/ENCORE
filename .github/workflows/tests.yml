@@ -1,0 +1,53 @@
+name: Lint and unit tests
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  shellcheck:
+    name: shellcheck
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out ENCORE
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+
+      - name: Install shellcheck
+        run: sudo apt-get update && sudo apt-get install -y shellcheck
+
+      - name: Run shellcheck
+        run: |
+          set -Eeuo pipefail
+          find . -name '*.sh' -not -path './wine/*' -not -path './build/*' \
+              -not -path './runtime/*' -not -path './ableton-prefix/*' \
+              -print0 |
+            xargs -0 shellcheck --severity=error
+
+  unit-tests:
+    name: Unit tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out ENCORE
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+
+      - name: Run tests/*.sh
+        run: |
+          set -Eeuo pipefail
+          status=0
+          for test in tests/*.sh; do
+            echo "::group::$test"
+            if ! bash "$test"; then
+              echo "FAILED: $test" >&2
+              status=1
+            fi
+            echo "::endgroup::"
+          done
+          exit "$status"

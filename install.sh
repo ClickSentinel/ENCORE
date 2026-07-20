@@ -8,7 +8,7 @@ SCRIPTS="$ROOT/scripts"
 ORIGINAL_ARGS=("$@")
 WINE_REVISION=6eb2e4c32cc9e271856146df11ed3a5c2cf29234
 ENCORE_RUNTIME_VERSION=v0.1.0
-ENCORE_GLIBC_MIN=2.35
+ENCORE_GLIBC_MIN=2.39
 DEFAULT_PREFIX="$ROOT/ableton-prefix"
 SOURCE_WINE="$ROOT/build/wine64/wine"
 DEFAULT_WINE="$ROOT/runtime/wine/bin/wine"
@@ -1019,7 +1019,7 @@ wine_build_ready()
         [[ ${runtime_records[6]} == pe_archs=i386,x86_64 ]] || return 1
         [[ ${runtime_records[7]} =~ ^glibc_max=([0-9]+\.[0-9]+)$ ]] || return 1
         glibc_max=${BASH_REMATCH[1]}
-        [[ $(printf '%s\n' "$glibc_max" 2.35 | sort -V | tail -n 1) == 2.35 ]] ||
+        [[ $(printf '%s\n' "$glibc_max" 2.39 | sort -V | tail -n 1) == 2.39 ]] ||
             return 1
         return 0
     fi

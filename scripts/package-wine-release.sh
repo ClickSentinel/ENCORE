@@ -147,8 +147,8 @@ while IFS= read -r -d '' file; do
 done < <(find "$runtime_dir" -type f -print0)
 glibc_max=$(sed 's/^GLIBC_//' "$glibc_versions" | sort -Vu | tail -n 1)
 [ -n "$glibc_max" ] || die "could not determine the runtime glibc requirement"
-if [ "$(printf '%s\n' "$glibc_max" 2.35 | sort -V | tail -n 1)" != 2.35 ]; then
-    die "runtime requires glibc $glibc_max, newer than the 2.35 release baseline"
+if [ "$(printf '%s\n' "$glibc_max" 2.39 | sort -V | tail -n 1)" != 2.39 ]; then
+    die "runtime requires glibc $glibc_max, newer than the 2.39 release baseline"
 fi
 
 embedded_path_files=$(grep -aR -l -F "$PROJECT_ROOT" "$runtime_dir" 2>/dev/null || true)

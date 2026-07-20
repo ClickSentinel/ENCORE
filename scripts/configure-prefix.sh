@@ -59,6 +59,6 @@ if [ -f "$WINEASIO_ROOT/wineasio64.dll" ] && [ -f "$WINEASIO_ROOT/wineasio64.dll
     done
     WINEPREFIX="$ENCORE_PREFIX" WINEDEBUG=-all \
         WINEDLLPATH="$WINEASIO_ROOT${WINEDLLPATH:+:$WINEDLLPATH}" \
-        "$WINE_BINARY" regsvr32 "$WINEASIO_ROOT/wineasio64.dll.so" >/dev/null 2>&1
+        "$WINE_BINARY" regsvr32 /s "$WINEASIO_ROOT/wineasio64.dll.so" >/dev/null 2>&1
     say "WineASIO registered for low-latency JACK/PipeWire audio"
 fi

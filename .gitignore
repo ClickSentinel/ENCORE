@@ -8,6 +8,7 @@
 /dist/
 /deps/
 /.tmp/
+/.ccache/
 
 # Local installer and runtime logs
 /logs/

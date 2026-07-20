@@ -90,7 +90,7 @@ case $manager in
             libgstreamer1.0-dev libgstreamer-plugins-base1.0-dev
             libglib2.0-dev liborc-0.4-dev libudev-dev libasound2-dev
             libgnutls28-dev libunwind-dev libjpeg-dev libpng-dev
-            libtiff-dev libxml2-dev libjack-jackd2-dev
+            libtiff-dev libxml2-dev libjack-jackd2-dev ccache
         )
         ;;
     dnf)
@@ -123,7 +123,7 @@ case $manager in
             gstreamer1-plugins-base-devel glib2-devel orc-devel
             systemd-devel alsa-lib-devel vulkan-loader-devel gnutls-devel
             libunwind-devel libjpeg-turbo-devel libpng-devel libtiff-devel
-            libxml2-devel pipewire-jack-audio-connection-kit-devel
+            libxml2-devel pipewire-jack-audio-connection-kit-devel ccache
         )
         ;;
     pacman)
@@ -150,7 +150,7 @@ case $manager in
             libxkbfile libxxf86vm libxkbcommon wayland libglvnd freetype2
             dbus libpulse glib2 orc systemd-libs alsa-lib vulkan-headers
             vulkan-icd-loader gnutls libunwind libjpeg-turbo libpng libtiff
-            libxml2 pipewire-jack
+            libxml2 pipewire-jack ccache
         )
         ;;
     *)

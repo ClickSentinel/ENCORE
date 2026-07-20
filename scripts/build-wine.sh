@@ -21,6 +21,33 @@ require_command x86_64-w64-mingw32-gcc
 
 "$SCRIPT_DIR/bootstrap-wine.sh"
 
+# Optional: speed up recompiles with ccache, if it's installed. Not a hard
+# requirement (existing installs without it just build as before) - this is
+# a pure performance optimization, not something correctness depends on.
+# ccache identifies which real compiler to run from the name it was invoked
+# as, so symlinks named after each compiler (its own documented "masquerade"
+# mode) let it transparently wrap both the host gcc/g++ and both mingw
+# cross-compilers without needing Wine's own configure/Makefile to know
+# ccache exists at all.
+if command -v ccache >/dev/null 2>&1; then
+    ccache_bin=$(command -v ccache)
+    ccache_wrappers="$PROJECT_ROOT/.tmp/ccache-wrappers"
+    mkdir -p "$ccache_wrappers"
+    for ccache_compiler in gcc g++ \
+        i686-w64-mingw32-gcc i686-w64-mingw32-g++ \
+        x86_64-w64-mingw32-gcc x86_64-w64-mingw32-g++
+    do
+        ln -sf "$ccache_bin" "$ccache_wrappers/$ccache_compiler"
+    done
+    PATH="$ccache_wrappers:$PATH"
+    export PATH
+    export CCACHE_DIR=${CCACHE_DIR:-"$PROJECT_ROOT/.ccache"}
+    export CCACHE_MAXSIZE=${CCACHE_MAXSIZE:-2G}
+    say "Using ccache ($CCACHE_DIR, max $CCACHE_MAXSIZE) to speed up recompiles"
+else
+    say "ccache not found; compiling without a compiler cache"
+fi
+
 system_modules='dbus-1 libpulse gstreamer-1.0 gstreamer-video-1.0 gstreamer-audio-1.0 gstreamer-tag-1.0 glib-2.0'
 use_system_dependencies=0
 if command -v pkg-config >/dev/null 2>&1 &&
