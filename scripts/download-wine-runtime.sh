@@ -74,12 +74,32 @@ validate_runtime()
     [ "$("$root/bin/wine" --version 2>/dev/null)" = wine-11.13 ] || return 1
 }
 
+replace_outdated=
 if [ -e "$ENCORE_RUNTIME_ROOT" ] || [ -L "$ENCORE_RUNTIME_ROOT" ]; then
     validate_runtime "$ENCORE_RUNTIME_ROOT" && {
         say "Reusing verified ENCORE runtime: $ENCORE_RUNTIME_ROOT"
         exit 0
     }
-    die "the runtime destination exists but is not a valid ENCORE runtime: $ENCORE_RUNTIME_ROOT"
+    # No user data lives in the runtime directory (unlike the Wine prefix,
+    # which holds the actual Ableton install and user settings, and is never
+    # touched here) - it's disposable ENCORE-managed infrastructure, so a
+    # recognizable ENCORE runtime that merely failed validation (e.g. an
+    # older pinned build or manifest schema, from before an ENCORE upgrade)
+    # is safe to replace automatically rather than forcing the user to
+    # manually delete it themselves. Anything that doesn't even look like an
+    # ENCORE manifest is left alone and still a hard failure, in case this
+    # path was pointed at something unrelated by mistake.
+    #
+    # The old runtime is only flagged here and not removed until the new one
+    # has been downloaded and validated (see the swap below), so a failed or
+    # interrupted update leaves the existing install untouched.
+    manifest="$ENCORE_RUNTIME_ROOT/.encore-runtime"
+    if [ -f "$manifest" ] && head -n1 "$manifest" 2>/dev/null | grep -qx 'ENCORE_WINE_RUNTIME_V[0-9]\+'; then
+        say "Found an outdated ENCORE runtime; will replace it once the new one is verified: $ENCORE_RUNTIME_ROOT"
+        replace_outdated=1
+    else
+        die "the runtime destination exists but is not a valid ENCORE runtime: $ENCORE_RUNTIME_ROOT"
+    fi
 fi
 
 [ "${#ENCORE_RUNTIME_SHA256}" -eq 64 ] ||
@@ -121,7 +141,25 @@ extract_dir=$(mktemp -d "$runtime_parent/.encore-wine.XXXXXX")
 trap 'rm -rf "$extract_dir"' EXIT HUP INT TERM
 tar -xJf "$archive" --no-same-owner --no-same-permissions -C "$extract_dir"
 validate_runtime "$extract_dir/encore-wine" || die "downloaded runtime validation failed"
-mv "$extract_dir/encore-wine" "$ENCORE_RUNTIME_ROOT"
+
+# The new runtime is downloaded and validated. Only now swap it in. An
+# outdated runtime being replaced is moved aside (a fast same-filesystem
+# rename) rather than deleted, the new one is moved into place, and the old
+# copy is removed only once the new one is installed - so an interruption
+# during the swap can be rolled back and never leaves the user without a
+# runtime.
+old_runtime=
+if [ -n "$replace_outdated" ] && { [ -e "$ENCORE_RUNTIME_ROOT" ] || [ -L "$ENCORE_RUNTIME_ROOT" ]; }; then
+    old_runtime="$ENCORE_RUNTIME_ROOT.replacing.$$"
+    rm -rf -- "$old_runtime"
+    mv -- "$ENCORE_RUNTIME_ROOT" "$old_runtime"
+    say "Replacing outdated ENCORE runtime: $ENCORE_RUNTIME_ROOT"
+fi
+if ! mv "$extract_dir/encore-wine" "$ENCORE_RUNTIME_ROOT"; then
+    [ -z "$old_runtime" ] || mv -- "$old_runtime" "$ENCORE_RUNTIME_ROOT"
+    die "failed to install the new ENCORE runtime"
+fi
+[ -z "$old_runtime" ] || rm -rf -- "$old_runtime"
 rmdir "$extract_dir"
 trap - EXIT HUP INT TERM
 rm -f "$archive"
