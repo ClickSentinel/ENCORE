@@ -15,7 +15,12 @@ ENCORE_RUNTIME_ASSET=encore-wine-11.13-r1-x86_64-linux-gnu.tar.xz
 ENCORE_SOURCE_ASSET=encore-wine-11.13-r1-source.tar.xz
 ENCORE_BUNDLE_ASSET=ENCORE-v0.1.3-linux-x86_64.tar.xz
 ENCORE_GLIBC_MIN=2.39
-ENCORE_RUNTIME_SHA256=${ENCORE_RUNTIME_SHA256:-1b574d0449e7239f152f939e135cfe8e122fec63a2b28cc1368d58d250750b84}
+# Deliberately ${VAR-default}, not ${VAR:-default}: package-wine-release.sh gates
+# the checksum comparison on [ -n "$ENCORE_RUNTIME_SHA256" ], i.e. it treats an
+# empty value as "no pin to check against". With :- an explicitly empty override
+# was substituted back to the pin, so that documented escape hatch never worked.
+# Unset still gets the pin; only an explicit blank disables the gate.
+ENCORE_RUNTIME_SHA256=${ENCORE_RUNTIME_SHA256-1b574d0449e7239f152f939e135cfe8e122fec63a2b28cc1368d58d250750b84}
 ENCORE_RELEASE_BASE_URL=${ENCORE_RELEASE_BASE_URL:-https://github.com/wowitsjack/ENCORE/releases/download/$ENCORE_RELEASE_VERSION}
 ENCORE_RUNTIME_ROOT=${ENCORE_RUNTIME_ROOT:-"$PROJECT_ROOT/runtime/wine"}
 WINE_SOURCE=${WINE_SOURCE:-"$PROJECT_ROOT/wine"}

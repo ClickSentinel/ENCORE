@@ -1,0 +1,119 @@
+name: Wine build check
+
+# Build and validate the patched Wine runtime on any change to the patch or the
+# build/packaging tooling, so a patch that fails to apply, breaks the compile,
+# or trips a packaging check is caught at PR time instead of only when a release
+# is cut by hand. This does NOT publish, upload, or attest anything - it just
+# proves the runtime still builds and passes the same validation the release
+# packaging does.
+#
+# Path-filtered so it only runs on the rare PR that actually touches Wine, not
+# on every change. It shares the release builder's cache keys (Wine source
+# clone + ccache), so the two warm each other and a typical run is minutes, not
+# the cold-build ceiling.
+on:
+  pull_request:
+    paths:
+      - patches/encore-wine.patch
+      - scripts/build-wine.sh
+      - scripts/bootstrap-wine.sh
+      - scripts/package-wine-release.sh
+      - scripts/common.sh
+      - .github/workflows/wine-build-check.yml
+  push:
+    branches: [main]
+    paths:
+      - patches/encore-wine.patch
+      - scripts/build-wine.sh
+      - scripts/bootstrap-wine.sh
+      - scripts/package-wine-release.sh
+      - scripts/common.sh
+      - .github/workflows/wine-build-check.yml
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-check:
+    name: Build & validate patched Wine
+    runs-on: ubuntu-24.04
+    container:
+      image: ubuntu:24.04
+    timeout-minutes: 240
+    env:
+      DEBIAN_FRONTEND: noninteractive
+      JOBS: "4"
+      WINE_INSTALL_PREFIX: /opt/encore-wine
+      SOURCE_DATE_EPOCH: "1783719732"
+
+    steps:
+      - name: Bootstrap the minimal build container
+        run: |
+          apt-get update
+          apt-get install -y ca-certificates git
+
+      - name: Check out ENCORE
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+
+      - name: Install build dependencies
+        run: ./scripts/install-dependencies.sh --install build
+
+      - name: Install packaging smoke-test tools
+        run: apt-get install -y binutils xvfb xauth
+
+      - name: Resolve pinned Wine revision
+        id: wine_revision
+        run: |
+          revision=$(sed -n 's/^WINE_REVISION=//p' scripts/common.sh)
+          [ -n "$revision" ] || { echo "Could not read WINE_REVISION" >&2; exit 1; }
+          echo "revision=$revision" >> "$GITHUB_OUTPUT"
+
+      # Same cache keys as build-runtime.yml so a release build and a PR check
+      # warm each other's Wine-source clone and ccache. Restore/save are split
+      # (not the combined cache action) so a later failure can't skip saving a
+      # good cache candidate - see build-runtime.yml for the full rationale.
+      - name: Restore Wine source checkout
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: wine
+          key: wine-source-${{ runner.os }}-${{ steps.wine_revision.outputs.revision }}
+          restore-keys: |
+            wine-source-${{ runner.os }}-
+
+      - name: Restore ccache
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: .ccache
+          key: ccache-${{ runner.os }}-${{ github.run_id }}
+          restore-keys: |
+            ccache-${{ runner.os }}-
+
+      - name: Build patched Wine
+        run: ./scripts/build-wine.sh
+
+      - name: Save Wine source checkout
+        if: always()
+        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: wine
+          key: wine-source-${{ runner.os }}-${{ steps.wine_revision.outputs.revision }}
+
+      - name: Save ccache
+        if: always()
+        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: .ccache
+          key: ccache-${{ runner.os }}-${{ github.run_id }}
+
+      # Runs the same validation the release packaging does - runtime
+      # completeness, i386+x86_64 PE archs, the glibc ceiling, no RPATH/RUNPATH,
+      # no embedded build paths, relocation + turnkey-bundle + corresponding-
+      # source smoke tests - but with ENCORE_RUNTIME_SHA256 blanked, because a
+      # patch change legitimately changes the runtime hash and there is no
+      # published checksum to match against on a PR. Nothing is uploaded.
+      - name: Validate runtime packaging (no checksum gate, no publish)
+        run: ENCORE_RUNTIME_SHA256= ./scripts/package-wine-release.sh
