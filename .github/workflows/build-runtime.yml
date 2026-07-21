@@ -68,16 +68,28 @@ jobs:
           # the derived asset names in one place; read them here instead of
           # hardcoding, so a version bump in versions.sh never has to be
           # mirrored into this workflow.
-          cd scripts && . ./common.sh && cd ..
+          # common.sh resolves its own directory from $0, and in a workflow step
+          # $0 is the runner's temp script - so sourcing it directly here looks
+          # for versions.sh next to that temp file and fails. Read the values in
+          # a `sh -c` subshell instead, whose $0 is "sh" (dirname "."), the same
+          # way the real scripts reach it from inside scripts/.
+          values=$(cd scripts && sh -c '. ./common.sh && printf "%s\n%s\n%s\n" \
+            "$ENCORE_RELEASE_VERSION" "$ENCORE_RUNTIME_ASSET" "$WINE_VERSION"')
+          release_version=$(printf '%s\n' "$values" | sed -n 1p)
+          runtime_asset=$(printf '%s\n' "$values" | sed -n 2p)
+          wine_version=$(printf '%s\n' "$values" | sed -n 3p)
+          for v in "$release_version" "$runtime_asset" "$wine_version"; do
+            [ -n "$v" ] || { echo "could not resolve release identifiers from scripts/versions.sh" >&2; exit 1; }
+          done
           if [ -n "$REQUESTED_VERSION" ] &&
-             [ "$REQUESTED_VERSION" != "$ENCORE_RELEASE_VERSION" ]; then
-            echo "release_version input ($REQUESTED_VERSION) does not match ENCORE_RELEASE_VERSION ($ENCORE_RELEASE_VERSION) in scripts/versions.sh" >&2
+             [ "$REQUESTED_VERSION" != "$release_version" ]; then
+            echo "release_version input ($REQUESTED_VERSION) does not match ENCORE_RELEASE_VERSION ($release_version) in scripts/versions.sh" >&2
             exit 1
           fi
           {
-            echo "release_version=$ENCORE_RELEASE_VERSION"
-            echo "runtime_asset=$ENCORE_RUNTIME_ASSET"
-            echo "wine_version=$WINE_VERSION"
+            echo "release_version=$release_version"
+            echo "runtime_asset=$runtime_asset"
+            echo "wine_version=$wine_version"
           } >> "$GITHUB_OUTPUT"
 
       - name: Resolve release-candidate run
