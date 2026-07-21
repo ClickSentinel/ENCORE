@@ -24,8 +24,8 @@ ENCORE is a guided Wine compatibility setup for running supported Windows editio
 ## Download and get started
 
 <p align="center">
-  <a href="https://github.com/wowitsjack/ENCORE/releases/download/v0.1.3/ENCORE-v0.1.3-linux-x86_64.tar.xz">
-    <img src="https://img.shields.io/badge/Download-ENCORE%20v0.1.3-6f42c1?style=for-the-badge&amp;logo=github" alt="Download ENCORE v0.1.3 for Linux">
+  <a href="https://github.com/wowitsjack/ENCORE/releases/download/v0.1.4/ENCORE-v0.1.4-linux-x86_64.tar.xz">
+    <img src="https://img.shields.io/badge/Download-ENCORE%20v0.1.4-6f42c1?style=for-the-badge&amp;logo=github" alt="Download ENCORE v0.1.4 for Linux">
   </a>
 </p>
 
@@ -35,7 +35,7 @@ ENCORE is a guided Wine compatibility setup for running supported Windows editio
 </p>
 
 <p align="center">
-  <a href="https://github.com/wowitsjack/ENCORE/releases/tag/v0.1.3">Release notes and checksums</a>
+  <a href="https://github.com/wowitsjack/ENCORE/releases/tag/v0.1.4">Release notes and checksums</a>
 </p>
 
 ### Before you start
@@ -53,9 +53,9 @@ You need:
 
 ### Install in five steps
 
-1. Click the **Download ENCORE v0.1.3** button above.
+1. Click the **Download ENCORE v0.1.4** button above.
 2. Open your Downloads folder and extract the `.tar.xz` archive.
-3. Move the extracted `ENCORE-v0.1.3-linux-x86_64` folder somewhere permanent and writable. A good choice is an `Applications` folder inside your Home folder; create it if it does not exist.
+3. Move the extracted `ENCORE-v0.1.4-linux-x86_64` folder somewhere permanent and writable. A good choice is an `Applications` folder inside your Home folder; create it if it does not exist.
 4. Open ENCORE in its permanent location, right-click an empty area, and choose **Open in Terminal**.
 5. Paste this command and press Enter:
 
@@ -128,9 +128,9 @@ Allow free space for the complete Live folder plus about 3.5 GiB for staging, th
 
 Each release publishes four files:
 
-- `ENCORE-v0.1.3-linux-x86_64.tar.xz`: the recommended turnkey package with ENCORE and Wine ready to use;
-- `encore-wine-11.13-r1-x86_64-linux-gnu.tar.xz`: the runtime-only asset used by the setup script;
-- `encore-wine-11.13-r1-source.tar.xz`: the complete corresponding patched Wine source and build instructions;
+- `ENCORE-v0.1.4-linux-x86_64.tar.xz`: the recommended turnkey package with ENCORE and Wine ready to use;
+- `encore-wine-11.13-r2-x86_64-linux-gnu.tar.xz`: the runtime-only asset used by the setup script;
+- `encore-wine-11.13-r2-source.tar.xz`: the complete corresponding patched Wine source and build instructions;
 - `SHA256SUMS`: checksums for all three archives.
 
 The runtime uses an x86-64 Unix host build plus Wine's combined i386 and x86-64 Windows PE support. This lets the 64-bit Live application and its retained 32-bit prerequisite installers run in one prefix. It is built on Ubuntu 24.04 against glibc 2.39, stripped, audited for absolute build paths and unsafe runtime search paths, then smoke-tested on Ubuntu, Fedora, and Arch Linux. Graphics drivers, audio services, desktop portals, and glibc remain supplied by the user's distribution so the bundle can work with the host desktop and GPU.
@@ -216,7 +216,7 @@ Live's **Settings > Plug-ins > VST3 Custom Folder > Browse** control uses the na
 - GNOME/Wayland/Xwayland is the primary tested window-management path; other desktops remain experimental.
 - Live 11's installed folder does not retain a Visual C++ setup under `Redist` at all. ENCORE relies on Wine's built-in Visual C++ compatibility for it instead.
 - Live's own GPU/GL renderer misrenders under Wine - most visibly, the account sign-in dialog stays blank until the window is resized, and idle CPU usage stays elevated. ENCORE forces Live's built-in GDI rendering backend by default to avoid this; set `ENCORE_LIVE_GPU=1` to use Live's own renderer instead. Fixed by shibco ([`shibco/ableton-linux`](https://github.com/shibco/ableton-linux)), ported into ENCORE by Jae ([`jaesharp/ENCORE`](https://github.com/jaesharp/ENCORE)).
-- A fullscreen-mode cursor/click misalignment, a double-titlebar bug at high DPI, and several other windowing/stability issues are fixed by the Wine patches in `patches/encore-wine.patch` (see [patches/README.md](patches/README.md) for full credit and detail), but only when Wine is built from source with `--build-from-source`. The default prebuilt runtime download does not yet include these fixes.
+- A fullscreen-mode cursor/click misalignment, a double-titlebar bug at high DPI, and several other windowing/stability issues are fixed by the Wine patches in `patches/encore-wine.patch` (see [patches/README.md](patches/README.md) for full credit and detail). As of v0.1.4 these are included in the default prebuilt runtime, so building from source is no longer required to get them.
 - Live 12 WebView2 currently requires `--no-sandbox` under this Wine build, weakening isolation for the remote Learn View page.
 - DirectComposition is disabled; Live 12 Learn View uses SwiftShader and CPU compositing.
 - Binary releases currently target x86-64 Linux. ARM64 and 32-bit Wine builds are not provided.
