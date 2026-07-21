@@ -5031,31 +5031,86 @@ index 02f85c4fe3..72a9fdf704 100644
  }
  
 diff --git a/dlls/win32u/window.c b/dlls/win32u/window.c
-index 924990e8d4..a472604202 100644
+index 924990e8d4..7aaf95ec69 100644
 --- a/dlls/win32u/window.c
 +++ b/dlls/win32u/window.c
-@@ -4136,6 +4136,20 @@ BOOL set_window_pos( WINDOWPOS *winpos, int parent_x, int parent_y )
+@@ -4011,6 +4011,18 @@ done:
+ }
+ 
+ /* NtUserSetWindowPos implementation */
++static BOOL is_ableton_main_window( HWND hwnd )
++{
++    static const WCHAR ableton_window_class[] =
++        {'A','b','l','e','t','o','n',' ','L','i','v','e',' ','W','i','n','d','o','w',' ','C','l','a','s','s'};
++    WCHAR buffer[ARRAY_SIZE(ableton_window_class) + 1];
++    UNICODE_STRING name = {.Buffer = buffer, .MaximumLength = sizeof(buffer)};
++    int len = NtUserGetClassName( hwnd, FALSE, &name );
++
++    return len == ARRAY_SIZE(ableton_window_class) &&
++           !memcmp( buffer, ableton_window_class, sizeof(ableton_window_class) );
++}
++
+ BOOL set_window_pos( WINDOWPOS *winpos, int parent_x, int parent_y )
+ {
+     RECT valid_rects[2], surface_rect;
+@@ -4136,6 +4148,56 @@ BOOL set_window_pos( WINDOWPOS *winpos, int parent_x, int parent_y )
      if (((winpos->flags & SWP_AGG_STATUSFLAGS) != SWP_AGG_NOPOSCHANGE)
              && !((orig_flags & SWP_AGG_NOCLIENTCHANGE) && (orig_flags & SWP_SHOWWINDOW)))
      {
 +        /* Suppress a nested, size-only WM_WINDOWPOSCHANGED re-entering the same
 +         * top-level window: Ableton Live's autosize handler re-drives SetWindowPos
 +         * from inside its own WM_WINDOWPOSCHANGED, spinning forever at high DPI.
-+         * Ported from shibco/ableton-linux NSPA patches 0003+0004 (per-thread state). */
++         * Ported from shibco/ableton-linux NSPA patches 0003+0004 (per-thread state).
++         *
++         * Gated on a depth threshold, not on the first reentrant call: a legitimate,
++         * bounded reentrant WM_WINDOWPOSCHANGED (e.g. a Max for Live device window
++         * laying itself out during instantiation) recurses once or twice and stops,
++         * whereas the runaway autosize loop this was written for reenters continuously.
++         * Suppressing on first reentry broke gen~-based Max for Live devices, which
++         * hung or crashed waiting on a WM_WINDOWPOSCHANGED that never arrived.
++         *
++         * A single depth limit can't satisfy both windows, though: Live's own main
++         * window ("Ableton Live Window Class") needs the original strict depth-1
++         * cutoff, or its own autosize handler spins/corrupts the window on maximize
++         * at high DPI; a Max for Live device's own window needs a much deeper
++         * threshold, or its legitimate multi-pass layout during instantiation never
++         * completes. Pick the limit per window instead of one global value. Window/
++         * client rect equality was tried first as the distinguishing signal (it
++         * gates a different, pre-existing decoration check in winex11.drv's
++         * get_mwm_decorations) but does not actually hold for Live's main window
++         * during a real maximize - confirmed by live instrumentation - so the window
++         * class name is used instead.
++         *
++         * The non-main threshold started at 4, which is enough for simple M4L
++         * devices in isolation but not for real-world Max for Live patches: hitting
++         * the cutoff at all suppresses a WM_WINDOWPOSCHANGED the device's own Max/MSP
++         * runtime (maxplug) is still waiting on, and since that runtime blocks its
++         * own thread on a condition variable pending that message, the whole app
++         * deadlocks rather than just mislaying out - confirmed live via winedbg
++         * (main thread stuck in SleepConditionVariableCS inside maxplug, a second
++         * thread stuck in a synchronous cross-thread SendMessageW, at identical
++         * addresses across repeated captures) loading a real project. Unlike Live's
++         * own autosize handler, which reenters genuinely without end, M4L's reentrant
++         * chains are naturally bounded - they finish - so a much higher (not
++         * unbounded) limit lets essentially any real device complete undisturbed
++         * while still eventually stopping a true infinite reentrant loop. */
++        enum { REENTRANT_WPCH_DEPTH_LIMIT_MAIN = 1, REENTRANT_WPCH_DEPTH_LIMIT_OTHER = 20 };
++        UINT reentrant_wpch_depth_limit = is_ableton_main_window( winpos->hwnd )
++            ? REENTRANT_WPCH_DEPTH_LIMIT_MAIN : REENTRANT_WPCH_DEPTH_LIMIT_OTHER;
 +        static const UINT reentrant_resize_flags =
 +            SWP_NOMOVE | SWP_NOZORDER | SWP_NOACTIVATE | SWP_NOOWNERZORDER;
 +        DWORD wpch_style = get_window_long( winpos->hwnd, GWL_STYLE );
 +        struct user_thread_info *thread_info = get_user_thread_info();
 +        BOOL suppress_reentrant_wpch =
 +            !(wpch_style & WS_CHILD) &&
-+            thread_info->reentrant_wpchanged_depth &&
++            thread_info->reentrant_wpchanged_depth >= reentrant_wpch_depth_limit &&
 +            thread_info->reentrant_wpchanged_hwnd == winpos->hwnd &&
 +            (orig_flags & reentrant_resize_flags) == reentrant_resize_flags &&
 +            !(orig_flags & (SWP_NOSIZE | SWP_SHOWWINDOW | SWP_HIDEWINDOW));
          /* WM_WINDOWPOSCHANGED is sent even if SWP_NOSENDCHANGING is set
             and always contains final window position.
           */
-@@ -4143,7 +4157,17 @@ BOOL set_window_pos( WINDOWPOS *winpos, int parent_x, int parent_y )
+@@ -4143,7 +4205,17 @@ BOOL set_window_pos( WINDOWPOS *winpos, int parent_x, int parent_y )
          winpos->y  = new_rects.window.top;
          winpos->cx = new_rects.window.right - new_rects.window.left;
          winpos->cy = new_rects.window.bottom - new_rects.window.top;
@@ -5074,7 +5129,7 @@ index 924990e8d4..a472604202 100644
      }
  
      if ((winpos->flags & (SWP_NOSIZE|SWP_NOMOVE|SWP_FRAMECHANGED)) != (SWP_NOSIZE|SWP_NOMOVE))
-@@ -5628,14 +5652,35 @@ void destroy_thread_windows(void)
+@@ -5628,14 +5700,35 @@ void destroy_thread_windows(void)
   *
   * Create a window handle with the server.
   */
@@ -5110,7 +5165,7 @@ index 924990e8d4..a472604202 100644
      SERVER_START_REQ( create_window )
      {
          req->parent          = wine_server_user_handle( parent );
-@@ -5860,6 +5905,9 @@ HWND WINAPI NtUserCreateWindowEx( DWORD ex_style, UNICODE_STRING *class_name,
+@@ -5860,6 +5953,9 @@ HWND WINAPI NtUserCreateWindowEx( DWORD ex_style, UNICODE_STRING *class_name,
  
      fix_cs_coordinates( &cs, &sw );
      cs.dwExStyle = fix_exstyle( cs.style, cs.dwExStyle );
@@ -5378,7 +5433,7 @@ index 9771b4d33f..90e5a06352 100644
          opengl_drawable_release( &gl->base );
          return FALSE;
 diff --git a/dlls/winex11.drv/window.c b/dlls/winex11.drv/window.c
-index 297695749a..96e3d4470c 100644
+index 297695749a..54b3f80b12 100644
 --- a/dlls/winex11.drv/window.c
 +++ b/dlls/winex11.drv/window.c
 @@ -500,6 +500,43 @@ static unsigned long get_mwm_decorations_for_style( DWORD style, DWORD ex_style
@@ -5425,20 +5480,30 @@ index 297695749a..96e3d4470c 100644
  
  /***********************************************************************
   *              get_mwm_decorations
-@@ -507,7 +544,11 @@ static unsigned long get_mwm_decorations_for_style( DWORD style, DWORD ex_style
+@@ -507,7 +544,21 @@ static unsigned long get_mwm_decorations_for_style( DWORD style, DWORD ex_style
  static unsigned long get_mwm_decorations( struct x11drv_win_data *data, DWORD style, DWORD ex_style )
  {
      if (EqualRect( &data->rects.window, &data->rects.visible )) return 0;
 -    return get_mwm_decorations_for_style( style, ex_style );
 +    /* Custom-NC windows (client == window, e.g. Ableton Live's main window) render their
 +     * own chrome; a reparenting WM would paint a second frame around it -- visible at high
-+     * DPI, where window != visible stops gating this. From shibco/ableton-linux NSPA 0004. */
++     * DPI, where window != visible stops gating this. From shibco/ableton-linux NSPA 0004.
++     *
++     * Tried replacing this with a window-class check (is_ableton_main_window, still
++     * defined above) since client==window does not reliably hold for the main window
++     * during a real maximize - confirmed live while fixing the WM_WINDOWPOSCHANGED
++     * reentrancy guard in win32u/window.c. That "fix" made this check match reliably,
++     * which fully suppressed the reparenting WM's own decorations for Ableton's main
++     * window - and Ableton's own custom title bar does not implement window dragging
++     * under Wine/COSMIC, leaving the window impossible to move at all (worse than the
++     * cosmetic double-titlebar this was meant to fix). Reverted; the flaky rect check
++     * accidentally preserved basic window management by usually failing to match. */
 +    if (EqualRect( &data->rects.window, &data->rects.client )) return 0;
 +    return get_mwm_decorations_for_window( data->hwnd, style, ex_style );
  }
  
  
-@@ -915,6 +956,30 @@ static void window_set_wm_normal_hints( struct x11drv_win_data *data, XSizeHints
+@@ -915,6 +966,30 @@ static void window_set_wm_normal_hints( struct x11drv_win_data *data, XSizeHints
   *
   * set the window size hints
   */
@@ -5469,7 +5534,7 @@ index 297695749a..96e3d4470c 100644
  static void set_size_hints( struct x11drv_win_data *data, DWORD style )
  {
      XSizeHints *size_hints;
-@@ -936,7 +1001,9 @@ static void set_size_hints( struct x11drv_win_data *data, DWORD style )
+@@ -936,7 +1011,9 @@ static void set_size_hints( struct x11drv_win_data *data, DWORD style )
          }
          else size_hints->win_gravity = NorthWestGravity;
  
@@ -5480,7 +5545,7 @@ index 297695749a..96e3d4470c 100644
          {
              size_hints->max_width = data->rects.visible.right - data->rects.visible.left;
              size_hints->max_height = data->rects.visible.bottom - data->rects.visible.top;
-@@ -1399,6 +1466,46 @@ static void window_set_net_wm_state( struct x11drv_win_data *data, UINT new_stat
+@@ -1399,6 +1476,46 @@ static void window_set_net_wm_state( struct x11drv_win_data *data, UINT new_stat
      }
  }
  
@@ -5527,7 +5592,7 @@ index 297695749a..96e3d4470c 100644
  static void window_set_config( struct x11drv_win_data *data, RECT rect, BOOL above )
  {
      UINT style = NtUserGetWindowLongW( data->hwnd, GWL_STYLE ), mask = 0;
-@@ -1467,6 +1574,8 @@ static void window_set_config( struct x11drv_win_data *data, RECT rect, BOOL abo
+@@ -1467,6 +1584,8 @@ static void window_set_config( struct x11drv_win_data *data, RECT rect, BOOL abo
      data->pending_state.rect = *new_rect;
      data->pending_state.above = above;
      data->configure_serial = NextRequest( data->display );
@@ -5536,7 +5601,7 @@ index 297695749a..96e3d4470c 100644
      TRACE( "window %p/%lx, requesting config %s mask %#x above %u, serial %lu\n", data->hwnd, data->whole_window,
             wine_dbgstr_rect(new_rect), mask, above, data->configure_serial );
      XReconfigureWMWindow( data->display, data->whole_window, data->vis.screen, mask, &changes );
-@@ -1737,6 +1846,136 @@ static UINT window_update_client_state( struct x11drv_win_data *data )
+@@ -1737,6 +1856,136 @@ static UINT window_update_client_state( struct x11drv_win_data *data )
      return 0;
  }
  
@@ -5673,7 +5738,7 @@ index 297695749a..96e3d4470c 100644
  static UINT window_update_client_config( struct x11drv_win_data *data )
  {
      static const UINT fullscreen_mask = (1 << NET_WM_STATE_MAXIMIZED) | (1 << NET_WM_STATE_FULLSCREEN);
-@@ -1754,6 +1993,29 @@ static UINT window_update_client_config( struct x11drv_win_data *data )
+@@ -1754,6 +2003,29 @@ static UINT window_update_client_config( struct x11drv_win_data *data )
      if (data->mwm_hints_serial) return 0; /* another MWM_HINT update is pending, wait for it to complete */
      if (data->configure_serial) return 0; /* another config update is pending, wait for it to complete */
  
@@ -5703,7 +5768,7 @@ index 297695749a..96e3d4470c 100644
      /* Ignore fullscreen config changes when it's still on the same monitor. This is needed because
       * adding __NET_WM_STATE_FULLSCREEN will make WMs move the window to cover exactly the monitor
       * rect. If the application sets a visible rect slightly larger than the monitor rect and insists
-@@ -1812,7 +2074,10 @@ BOOL X11DRV_GetWindowStateUpdates( HWND hwnd, UINT *state_cmd, UINT *swp_flags,
+@@ -1812,7 +2084,10 @@ BOOL X11DRV_GetWindowStateUpdates( HWND hwnd, UINT *state_cmd, UINT *swp_flags,
      {
          *state_cmd = window_update_client_state( data );
          *swp_flags = window_update_client_config( data );
@@ -5715,7 +5780,7 @@ index 297695749a..96e3d4470c 100644
          release_win_data( data );
      }
  
-@@ -1952,12 +2217,50 @@ void window_configure_notify( struct x11drv_win_data *data, unsigned long serial
+@@ -1952,12 +2227,50 @@ void window_configure_notify( struct x11drv_win_data *data, unsigned long serial
  {
      RECT *desired = &data->desired_state.rect, *pending = &data->pending_state.rect, *current = &data->current_state.rect;
      unsigned long *expect_serial = &data->configure_serial;
@@ -5766,7 +5831,7 @@ index 297695749a..96e3d4470c 100644
      /* if we've delayed some config we want to continue with it, make sure handle_state_change doesn't overwrite it */
      if ((*expect_serial || window_needs_config_change_delay( data )) &&
          serial >= *expect_serial && !EqualRect( desired, pending ))
-@@ -1969,10 +2272,38 @@ void window_configure_notify( struct x11drv_win_data *data, unsigned long serial
+@@ -1969,10 +2282,38 @@ void window_configure_notify( struct x11drv_win_data *data, unsigned long serial
      if (!handle_state_change( serial, expect_serial, sizeof(*value), value, desired, pending,
                                current, expected, prefix, received, NULL ))
          return;
@@ -5805,7 +5870,7 @@ index 297695749a..96e3d4470c 100644
  }
  
  void net_active_window_notify( unsigned long serial, Window value, Time time )
-@@ -2041,10 +2372,23 @@ void set_net_active_window( HWND hwnd, HWND previous )
+@@ -2041,10 +2382,23 @@ void set_net_active_window( HWND hwnd, HWND previous )
      BOOL withdrawn = FALSE;
      Window window;
      XEvent xev;
@@ -5830,7 +5895,7 @@ index 297695749a..96e3d4470c 100644
      if (window_set_pending_activate( hwnd, &withdrawn )) return;
  
      xev.xclient.type = ClientMessage;
-@@ -2055,12 +2399,13 @@ void set_net_active_window( HWND hwnd, HWND previous )
+@@ -2055,12 +2409,13 @@ void set_net_active_window( HWND hwnd, HWND previous )
      xev.xclient.send_event = True;
      xev.xclient.format = 32;
      xev.xclient.data.l[0] = 2; /* source: pager */
@@ -5845,7 +5910,7 @@ index 297695749a..96e3d4470c 100644
  
      if (withdrawn)
      {
-@@ -2071,7 +2416,8 @@ void set_net_active_window( HWND hwnd, HWND previous )
+@@ -2071,7 +2426,8 @@ void set_net_active_window( HWND hwnd, HWND previous )
      }
      data->pending_state.net_active_window = window;
  
@@ -5855,7 +5920,7 @@ index 297695749a..96e3d4470c 100644
      XSendEvent( data->display, DefaultRootWindow( data->display ), False,
                  SubstructureRedirectMask | SubstructureNotifyMask, &xev );
  }
-@@ -2157,6 +2503,18 @@ static void sync_window_position( struct x11drv_win_data *data, UINT swp_flags,
+@@ -2157,6 +2513,18 @@ static void sync_window_position( struct x11drv_win_data *data, UINT swp_flags,
      if (data->is_offscreen) OffsetRect( &new_rect, window_rect.left - old_rects->window.left,
                                          window_rect.top - old_rects->window.top );
  
@@ -5874,7 +5939,7 @@ index 297695749a..96e3d4470c 100644
      window_set_config( data, new_rect, above );
  }
  
-@@ -2497,6 +2855,8 @@ static void destroy_whole_window( struct x11drv_win_data *data, BOOL already_des
+@@ -2497,6 +2865,8 @@ static void destroy_whole_window( struct x11drv_win_data *data, BOOL already_des
          }
      }
      if (data->whole_colormap) XFreeColormap( data->display, data->whole_colormap );
@@ -5883,7 +5948,7 @@ index 297695749a..96e3d4470c 100644
      data->whole_window = data->client_window = 0;
      data->whole_colormap = 0;
      data->managed = FALSE;
-@@ -3066,6 +3426,15 @@ void X11DRV_ReleaseDC( HWND hwnd, HDC hdc )
+@@ -3066,6 +3436,15 @@ void X11DRV_ReleaseDC( HWND hwnd, HDC hdc )
      escape.mode = IncludeInferiors;
      escape.dc_rect = NtUserGetVirtualScreenRect( MDT_DEFAULT );
      OffsetRect( &escape.dc_rect, -2 * escape.dc_rect.left, -2 * escape.dc_rect.top );
@@ -5899,7 +5964,7 @@ index 297695749a..96e3d4470c 100644
      NtGdiExtEscape( hdc, NULL, 0, X11DRV_ESCAPE, sizeof(escape), (LPSTR)&escape, 0, NULL );
  }
  
-@@ -3194,6 +3563,18 @@ void X11DRV_MoveWindowBits( HWND hwnd, const struct window_rects *old_rects,
+@@ -3194,6 +3573,18 @@ void X11DRV_MoveWindowBits( HWND hwnd, const struct window_rects *old_rects,
      struct x11drv_win_data *data;
      Window window;
  
@@ -5918,7 +5983,7 @@ index 297695749a..96e3d4470c 100644
      if (!(data = get_win_data( hwnd ))) return;
      window = data->whole_window;
      release_win_data( data );
-@@ -3216,7 +3597,7 @@ void X11DRV_MoveWindowBits( HWND hwnd, const struct window_rects *old_rects,
+@@ -3216,7 +3607,7 @@ void X11DRV_MoveWindowBits( HWND hwnd, const struct window_rects *old_rects,
   */
  BOOL X11DRV_GetWindowStyleMasks( HWND hwnd, UINT style, UINT ex_style, UINT *style_mask, UINT *ex_style_mask )
  {
@@ -5927,7 +5992,7 @@ index 297695749a..96e3d4470c 100644
      struct x11drv_win_data *data;
  
      if ((data = get_win_data( hwnd )))
-@@ -3266,7 +3647,22 @@ void X11DRV_WindowPosChanged( HWND hwnd, HWND insert_after, HWND owner_hint, UIN
+@@ -3266,7 +3657,22 @@ void X11DRV_WindowPosChanged( HWND hwnd, HWND insert_after, HWND owner_hint, UIN
  
      old_rects = data->rects;
      was_fullscreen = data->is_fullscreen;
