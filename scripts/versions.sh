@@ -40,4 +40,4 @@ ENCORE_GLIBC_MIN=2.39
 # builds a patch change that legitimately produces a new hash. With :- an
 # explicitly empty override was substituted back to the pin and the gate stayed
 # armed. Unset still gets the pin; only an explicit blank disables the gate.
-ENCORE_RUNTIME_SHA256=${ENCORE_RUNTIME_SHA256-aeb74ec918a4cc83a8690362a793dabc85f26be9e087f554daf35400440b5a14}
+ENCORE_RUNTIME_SHA256=${ENCORE_RUNTIME_SHA256-c19d2d6ed94e7f0e43d5e060e9869e5958a7e60b77a8809fa3dc1255a1a040df}
