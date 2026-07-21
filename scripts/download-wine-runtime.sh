@@ -62,7 +62,7 @@ validate_runtime()
     [ "${#records[@]}" -eq 8 ] || return 1
     [ "${records[0]}" = ENCORE_WINE_RUNTIME_V1 ] || return 1
     [ "${records[1]}" = "encore_version=$ENCORE_RUNTIME_VERSION" ] || return 1
-    [ "${records[2]}" = wine_version=11.13 ] || return 1
+    [ "${records[2]}" = wine_version=$WINE_VERSION ] || return 1
     [ "${records[3]}" = "wine_revision=$WINE_REVISION" ] || return 1
     [ "${records[4]}" = "patch_sha256=$expected_patch" ] || return 1
     [ "${records[5]}" = arch=x86_64 ] || return 1
@@ -71,7 +71,7 @@ validate_runtime()
     glibc_max=${BASH_REMATCH[1]}
     [ "$(printf '%s\n' "$glibc_max" 2.39 | sort -V | tail -n 1)" = 2.39 ] ||
         return 1
-    [ "$("$root/bin/wine" --version 2>/dev/null)" = wine-11.13 ] || return 1
+    [ "$("$root/bin/wine" --version 2>/dev/null)" = wine-$WINE_VERSION ] || return 1
 }
 
 replace_outdated=

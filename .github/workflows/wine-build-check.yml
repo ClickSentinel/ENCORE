@@ -68,9 +68,13 @@ jobs:
       - name: Resolve pinned Wine revision
         id: wine_revision
         run: |
-          revision=$(sed -n 's/^WINE_REVISION=//p' scripts/common.sh)
-          [ -n "$revision" ] || { echo "Could not read WINE_REVISION" >&2; exit 1; }
-          echo "revision=$revision" >> "$GITHUB_OUTPUT"
+          # Sourced from versions.sh, the single source of truth, rather than
+          # text-matched out of a file it merely happened to live in. Must stay
+          # identical to build-runtime.yml's copy: the two share cache keys, so
+          # if they ever resolve different revisions they poison each other.
+          . ./scripts/versions.sh
+          [ -n "$WINE_REVISION" ] || { echo "Could not read WINE_REVISION" >&2; exit 1; }
+          echo "revision=$WINE_REVISION" >> "$GITHUB_OUTPUT"
 
       # Same cache keys as build-runtime.yml so a release build and a PR check
       # warm each other's Wine-source clone and ccache. Restore/save are split

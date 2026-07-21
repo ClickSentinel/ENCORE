@@ -194,7 +194,7 @@ fi
 [ -x "$WINE_BINARY" ] || die "build completed without $WINE_BINARY"
 [ -x "$WINE_BUILD/server/wineserver" ] || die "build completed without wineserver"
 version=$("$WINE_BINARY" --version)
-[ "$version" = wine-11.13 ] || die "unexpected Wine version: $version"
+[ "$version" = wine-$WINE_VERSION ] || die "unexpected Wine version: $version"
 for artifact in \
     "$WINE_BUILD/dlls/winex11.drv/winex11.so" \
     "$WINE_BUILD/dlls/winegstreamer/winegstreamer.so" \

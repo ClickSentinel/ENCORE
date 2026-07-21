@@ -6,9 +6,10 @@ set -Eeuo pipefail
 ROOT=$(CDPATH= cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
 SCRIPTS="$ROOT/scripts"
 ORIGINAL_ARGS=("$@")
-WINE_REVISION=6eb2e4c32cc9e271856146df11ed3a5c2cf29234
-ENCORE_RUNTIME_VERSION=v0.1.0
-ENCORE_GLIBC_MIN=2.39
+# Version identifiers and pinned build inputs come from the single source of
+# truth. install.sh deliberately does not source common.sh, but versions.sh is
+# pure assignments with no side effects and is safe to source on its own.
+. "$SCRIPTS/versions.sh"
 DEFAULT_PREFIX="$ROOT/ableton-prefix"
 SOURCE_WINE="$ROOT/build/wine64/wine"
 DEFAULT_WINE="$ROOT/runtime/wine/bin/wine"
@@ -974,7 +975,7 @@ wine_build_ready()
     local runtime_root manifest glibc_max
     local -a runtime_records=() configured_pe_archs=()
     [[ -x $candidate ]] || return 1
-    [[ $("$candidate" --version 2>/dev/null) == wine-11.13 ]] || return 1
+    [[ $("$candidate" --version 2>/dev/null) == wine-$WINE_VERSION ]] || return 1
     expected_hash=$(sha256sum "$ROOT/patches/encore-wine.patch" | awk '{print $1}')
 
     build_dir=$(dirname -- "$candidate")
@@ -1012,7 +1013,7 @@ wine_build_ready()
         [[ ${#runtime_records[@]} -eq 8 ]] || return 1
         [[ ${runtime_records[0]} == ENCORE_WINE_RUNTIME_V1 ]] || return 1
         [[ ${runtime_records[1]} == "encore_version=$ENCORE_RUNTIME_VERSION" ]] || return 1
-        [[ ${runtime_records[2]} == wine_version=11.13 ]] || return 1
+        [[ ${runtime_records[2]} == wine_version=$WINE_VERSION ]] || return 1
         [[ ${runtime_records[3]} == "wine_revision=$WINE_REVISION" ]] || return 1
         [[ ${runtime_records[4]} == "patch_sha256=$expected_hash" ]] || return 1
         [[ ${runtime_records[5]} == arch=x86_64 ]] || return 1
@@ -1458,10 +1459,10 @@ verify_external_wine()
     [[ -x $wine ]] || die "Wine executable not found: $wine"
     local version
     version=$("$wine" --version 2>/dev/null || true)
-    [[ $version == wine-11.13 ]] ||
-        die "Expected ENCORE's Wine 11.13 build, but $wine reports ${version:-no version}"
+    [[ $version == wine-$WINE_VERSION ]] ||
+        die "Expected ENCORE's Wine $WINE_VERSION build, but $wine reports ${version:-no version}"
     wine_build_ready "$wine" ||
-        die "Wine 11.13 was found, but its ENCORE runtime manifest or build artifacts are incomplete: $wine"
+        die "Wine $WINE_VERSION was found, but its ENCORE runtime manifest or build artifacts are incomplete: $wine"
 }
 
 verify_installation()

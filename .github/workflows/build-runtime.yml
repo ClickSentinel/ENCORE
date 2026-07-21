@@ -4,9 +4,12 @@ on:
   workflow_dispatch:
     inputs:
       release_version:
-        description: ENCORE application release version to package
-        required: true
-        default: v0.1.3
+        description: >-
+          Optional assertion of the release version to package. Leave empty to
+          use ENCORE_RELEASE_VERSION from scripts/versions.sh (the single source
+          of truth); if set, it must match that value or the run fails.
+        required: false
+        default: ""
         type: string
       artifact_run_id:
         description: Existing workflow run ID to validate without rebuilding Wine
@@ -33,6 +36,9 @@ jobs:
     runs-on: ubuntu-24.04
     outputs:
       artifact_run_id: ${{ steps.artifact_run.outputs.run_id }}
+      release_version: ${{ steps.versions.outputs.release_version }}
+      runtime_asset: ${{ steps.versions.outputs.runtime_asset }}
+      wine_version: ${{ steps.versions.outputs.wine_version }}
     container:
       image: ubuntu:24.04
     timeout-minutes: 240
@@ -50,6 +56,29 @@ jobs:
 
       - name: Check out ENCORE
         uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+
+      - name: Resolve release identifiers from the single source of truth
+        id: versions
+        shell: bash
+        env:
+          REQUESTED_VERSION: ${{ inputs.release_version }}
+        run: |
+          set -Eeuo pipefail
+          # scripts/versions.sh (via common.sh) defines the release version and
+          # the derived asset names in one place; read them here instead of
+          # hardcoding, so a version bump in versions.sh never has to be
+          # mirrored into this workflow.
+          cd scripts && . ./common.sh && cd ..
+          if [ -n "$REQUESTED_VERSION" ] &&
+             [ "$REQUESTED_VERSION" != "$ENCORE_RELEASE_VERSION" ]; then
+            echo "release_version input ($REQUESTED_VERSION) does not match ENCORE_RELEASE_VERSION ($ENCORE_RELEASE_VERSION) in scripts/versions.sh" >&2
+            exit 1
+          fi
+          {
+            echo "release_version=$ENCORE_RELEASE_VERSION"
+            echo "runtime_asset=$ENCORE_RUNTIME_ASSET"
+            echo "wine_version=$WINE_VERSION"
+          } >> "$GITHUB_OUTPUT"
 
       - name: Resolve release-candidate run
         id: artifact_run
@@ -80,9 +109,14 @@ jobs:
         if: ${{ inputs.artifact_run_id == '' }}
         id: wine_revision
         run: |
-          revision=$(sed -n 's/^WINE_REVISION=//p' scripts/common.sh)
-          [ -n "$revision" ] || { echo "Could not read WINE_REVISION" >&2; exit 1; }
-          echo "revision=$revision" >> "$GITHUB_OUTPUT"
+          # Sourced from versions.sh, the single source of truth, rather than
+          # text-matched out of a file it merely happened to live in. Sourcing
+          # keeps working if the assignment is reordered, quoted, or commented;
+          # versions.sh is plain assignments with no $0 dependency, so it is
+          # safe to source from anywhere.
+          . ./scripts/versions.sh
+          [ -n "$WINE_REVISION" ] || { echo "Could not read WINE_REVISION" >&2; exit 1; }
+          echo "revision=$WINE_REVISION" >> "$GITHUB_OUTPUT"
 
       # Wine's own git history rarely changes revision (it's a deliberately
       # pinned constant), so this is usually an exact cache hit that skips
@@ -204,13 +238,13 @@ jobs:
 
       - name: Package runtime and corresponding source
         if: ${{ inputs.artifact_run_id == '' }}
-        run: ./scripts/package-wine-release.sh "${{ inputs.release_version }}" "$PWD/dist"
+        run: ./scripts/package-wine-release.sh "${{ steps.versions.outputs.release_version }}" "$PWD/dist"
 
       - name: Upload release candidates
         if: ${{ inputs.artifact_run_id == '' }}
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
-          name: encore-wine-${{ inputs.release_version }}
+          name: encore-wine-${{ steps.versions.outputs.release_version }}
           path: |
             dist/*.tar.xz
             dist/SHA256SUMS
@@ -222,7 +256,7 @@ jobs:
         if: ${{ inputs.artifact_run_id != '' }}
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
-          name: encore-wine-${{ inputs.release_version }}
+          name: encore-wine-${{ steps.versions.outputs.release_version }}
           path: dist
           github-token: ${{ github.token }}
           repository: ${{ github.repository }}
@@ -238,7 +272,7 @@ jobs:
           mkdir -p "$RUNNER_TEMP/encore runtime"
           tar -xJf "dist/$ENCORE_RUNTIME_ASSET" -C "$RUNNER_TEMP/encore runtime"
           runtime="$RUNNER_TEMP/encore runtime/encore-wine"
-          test "$("$runtime/bin/wine" --version)" = wine-11.13
+          test "$("$runtime/bin/wine" --version)" = "wine-${{ steps.versions.outputs.wine_version }}"
           while IFS= read -r -d '' candidate; do
             readelf -h "$candidate" >/dev/null 2>&1 || continue
             if ! dependencies=$(LD_LIBRARY_PATH="$runtime/lib/wine/x86_64-unix" \
@@ -284,7 +318,7 @@ jobs:
           trap - EXIT HUP INT TERM
           SMOKE
         env:
-          ENCORE_RUNTIME_ASSET: encore-wine-11.13-r1-x86_64-linux-gnu.tar.xz
+          ENCORE_RUNTIME_ASSET: ${{ steps.versions.outputs.runtime_asset }}
 
       - name: Attest release candidates
         if: ${{ inputs.artifact_run_id == '' }}
@@ -329,7 +363,7 @@ jobs:
       - name: Download release candidates
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
-          name: encore-wine-${{ inputs.release_version }}
+          name: encore-wine-${{ needs.build.outputs.release_version }}
           path: dist
           github-token: ${{ github.token }}
           repository: ${{ github.repository }}
@@ -349,10 +383,10 @@ jobs:
           sha256sum -c SHA256SUMS
           cd ..
           mkdir -p "$RUNNER_TEMP/runtime"
-          tar -xJf dist/encore-wine-11.13-r1-x86_64-linux-gnu.tar.xz \
+          tar -xJf "dist/${{ needs.build.outputs.runtime_asset }}" \
             -C "$RUNNER_TEMP/runtime"
           runtime="$RUNNER_TEMP/runtime/encore-wine"
-          test "$("$runtime/bin/wine" --version)" = wine-11.13
+          test "$("$runtime/bin/wine" --version)" = "wine-${{ needs.build.outputs.wine_version }}"
           while IFS= read -r -d '' candidate; do
             readelf -h "$candidate" >/dev/null 2>&1 || continue
             if ! dependencies=$(LD_LIBRARY_PATH="$runtime/lib/wine/x86_64-unix" \

@@ -23,7 +23,7 @@ for command in awk cp find grep i686-w64-mingw32-strip install make mktemp \
 done
 
 [ -x "$WINE_BUILD/wine" ] || die "missing completed Wine build: $WINE_BUILD/wine"
-[ "$($WINE_BUILD/wine --version)" = wine-11.13 ] || die "the build is not Wine 11.13"
+[ "$($WINE_BUILD/wine --version)" = wine-$WINE_VERSION ] || die "the build is not Wine $WINE_VERSION"
 [ -f "$WINE_BUILD/include/config.h" ] || die "missing Wine configuration"
 grep -Fqx "prefix = $WINE_INSTALL_PREFIX" "$WINE_BUILD/config.status" ||
     die "Wine must be configured with --prefix=$WINE_INSTALL_PREFIX"
@@ -56,7 +56,7 @@ work_dir=$(mktemp -d "${TMPDIR:-/tmp}/encore-release.XXXXXX")
 trap 'rm -rf "$work_dir"' EXIT HUP INT TERM
 stage_dir="$work_dir/stage"
 runtime_dir="$work_dir/encore-wine"
-source_name=encore-wine-11.13-$ENCORE_RUNTIME_REVISION-source
+source_name=encore-wine-$WINE_VERSION-$ENCORE_RUNTIME_REVISION-source
 source_dir="$work_dir/$source_name"
 source_wine_dir="$source_dir/wine"
 bundle_name=${ENCORE_BUNDLE_ASSET%.tar.xz}
@@ -165,7 +165,7 @@ fi
 cat >"$runtime_dir/.encore-runtime" <<EOF
 ENCORE_WINE_RUNTIME_V1
 encore_version=$ENCORE_RUNTIME_VERSION
-wine_version=11.13
+wine_version=$WINE_VERSION
 wine_revision=$WINE_REVISION
 patch_sha256=$patch_sha256
 arch=x86_64
@@ -175,7 +175,7 @@ EOF
 
 cat >"$runtime_dir/BUILD-INFO.txt" <<EOF
 ENCORE Wine runtime $ENCORE_RUNTIME_VERSION
-Wine version: 11.13
+Wine version: $WINE_VERSION
 Upstream revision: $WINE_REVISION
 ENCORE patch SHA-256: $patch_sha256
 Host architecture: x86_64-linux-gnu
@@ -202,6 +202,10 @@ for script in common.sh bootstrap-wine.sh build-wine.sh prepare-deps.sh \
 do
     install -m 0755 "$SCRIPT_DIR/$script" "$source_dir/scripts/$script"
 done
+# versions.sh is sourced by common.sh, so the corresponding-source archive
+# cannot bootstrap without it. Installed 0644, not 0755, because it is sourced
+# and carries no shebang.
+install -m 0644 "$SCRIPT_DIR/versions.sh" "$source_dir/scripts/versions.sh"
 install -m 0644 "$PROJECT_ROOT/.github/workflows/build-runtime.yml" \
     "$source_dir/.github/workflows/build-runtime.yml"
 cat >"$source_dir/README.md" <<EOF
@@ -267,7 +271,7 @@ fi
 relocation_dir="$work_dir/path with spaces/relocated"
 mkdir -p "$relocation_dir"
 tar -xJf "$runtime_archive" -C "$relocation_dir"
-[ "$("$relocation_dir/encore-wine/bin/wine" --version)" = wine-11.13 ] ||
+[ "$("$relocation_dir/encore-wine/bin/wine" --version)" = wine-$WINE_VERSION ] ||
     die "relocated runtime smoke test failed"
 
 if [ "$build_turnkey_bundle" -eq 1 ]; then
@@ -278,7 +282,7 @@ if [ "$build_turnkey_bundle" -eq 1 ]; then
     mkdir -p "$bundle_test_dir"
     tar -xJf "$bundle_archive" -C "$bundle_test_dir"
     bundle_root="$bundle_test_dir/$bundle_name"
-    [ "$("$bundle_root/runtime/wine/bin/wine" --version)" = wine-11.13 ] ||
+    [ "$("$bundle_root/runtime/wine/bin/wine" --version)" = wine-$WINE_VERSION ] ||
         die "turnkey bundle runtime smoke test failed"
     ENCORE_RUNTIME_ROOT="$bundle_root/runtime/wine" \
         "$bundle_root/scripts/download-wine-runtime.sh" >/dev/null
