@@ -7,6 +7,9 @@
 
 <h1 align="center">ENCORE</h1>
 
+> [!CAUTION]
+> **ENCORE is discontinued and no longer maintained.** Development in this space has moved to [ableton-linux](https://github.com/shibco/ableton-linux), which continues ENCORE's approach — a verified patched Wine runtime, HiDPI, native file access, VST3 hosting, and more — with active fixes and new features going forward. If you're currently using ENCORE, migrating is straightforward: your existing Wine prefix and Ableton authorization carry over without needing to reauthorize. This repository is kept for historical reference only and will not receive further updates.
+
 ENCORE is a guided Wine compatibility setup for running supported Windows editions of Ableton Live 11 and 12 on Linux. It is maintained by `wowitsjack` and focuses on making the difficult parts, including installing a verified patched Wine runtime, configuring HiDPI, native file access, VST3 hosting, audio, drag-and-drop, themed menus, and Learn View, approachable from one command.
 
 > [!WARNING]
