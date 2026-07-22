@@ -10,6 +10,34 @@
 > [!CAUTION]
 > **ENCORE is discontinued and no longer maintained.** Development in this space has moved to [ableton-linux](https://github.com/shibco/ableton-linux), which continues ENCORE's approach — a verified patched Wine runtime, HiDPI, native file access, VST3 hosting, and more — with active fixes and new features going forward. If you're currently using ENCORE, migrating is straightforward: your existing Wine prefix and Ableton authorization carry over without needing to reauthorize. This repository is kept for historical reference only and will not receive further updates.
 
+### Migrating to ableton-linux
+
+You can switch without re-downloading Live or reauthorizing. Ableton's offline authorization binds to the Wine prefix's `MachineGuid`, not to which Wine build runs it — as long as you reuse your existing prefix's files instead of creating a new one, the license carries over.
+
+1. **Install ableton-linux's Wine runtime.** Download the installer from [ableton-linux](https://github.com/shibco/ableton-linux) and run it (see its README). This only touches `~/.local/opt` and `~/.local/bin`/`~/.local/share` — it does not touch your existing ENCORE prefix.
+
+2. **Copy your ENCORE prefix — don't move it.** It's the `ableton-prefix` folder inside wherever you installed ENCORE (`$ENCORE_PREFIX`, or `./ableton-prefix` relative to ENCORE's install location, by default). Keeping the original intact means you always have a fallback if anything goes wrong:
+
+   ```sh
+   cp -a /path/to/ENCORE/ableton-prefix ~/.wine-ableton
+   ```
+
+   Naming the copy `~/.wine-ableton` — ableton-linux's default prefix location — means its installed launcher and desktop icon work with no extra configuration.
+
+3. **Align the prefix with ableton-linux's runtime:**
+
+   ```sh
+   ABLETON_WINEPREFIX=~/.wine-ableton /path/to/ableton-linux/scripts/setup-prefix.sh --refresh
+   ```
+
+   `--refresh` works on an existing prefix: it forces the native VC++ runtime over Wine's builtin stubs, re-registers PipeASIO, and syncs DPI/theme/portal policy. It does not touch your Ableton installation or license.
+
+4. **Launch:** `ableton-live`. It should open already authorized — no prompts.
+
+5. **Do the first-launch checklist** from ableton-linux's README if you haven't already: in Live, Options → uncheck "Auto-Scale Plugin Window"; Preferences → Audio → Driver Type ASIO → Device PipeASIO.
+
+Nothing here is destructive — don't reinstall Live from a downloaded zip against a fresh prefix, since that creates a new `MachineGuid` and forces reauthorization. Your original ENCORE prefix and Wine build stay untouched throughout, so you can go back at any time.
+
 ENCORE is a guided Wine compatibility setup for running supported Windows editions of Ableton Live 11 and 12 on Linux. It is maintained by `wowitsjack` and focuses on making the difficult parts, including installing a verified patched Wine runtime, configuring HiDPI, native file access, VST3 hosting, audio, drag-and-drop, themed menus, and Learn View, approachable from one command.
 
 > [!WARNING]
